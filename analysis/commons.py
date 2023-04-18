@@ -21,6 +21,13 @@ def plot_gaze_eyes(x_0,y_0,x_1,y_1):
     ax.set_ylabel('y coordinates')
     fig.set_figwidth(10)
 
+def plot_pupillometry_both_eyes(df_left_eye,df_right_eye):
+    fig2, ax2=plt.subplots(1,1)
+    ax2.plot(df_left_eye['pupil_timestamp'],df_left_eye['diameter_3d'])
+    ax2.plot(df_right_eye['pupil_timestamp'],df_right_eye['diameter_3d'])
+    ax2.legend(['left eye', 'right eye'])
+    ax2.set_xlabel('timestamps (s)')
+    ax2.set_ylabel('diameter [px]')
 
 def extract_annotations_timestamps(annotation,annotation_col,dataframe):
     """Function to extract timesatmps from annotations table of pupil core
