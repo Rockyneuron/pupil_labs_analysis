@@ -27,7 +27,7 @@ def plot_pupillometry_both_eyes(df_left_eye,df_right_eye):
     ax2.plot(df_right_eye['pupil_timestamp'],df_right_eye['diameter_3d'])
     ax2.legend(['left eye', 'right eye'])
     ax2.set_xlabel('timestamps (s)')
-    ax2.set_ylabel('diameter [px]')
+    ax2.set_ylabel('diameter (mm)')
 
 def extract_annotations_timestamps(annotation,annotation_col,dataframe):
     """Function to extract timesatmps from annotations table of pupil core
@@ -37,7 +37,7 @@ def extract_annotations_timestamps(annotation,annotation_col,dataframe):
     Args:
         annotation (_str_): string of the annotation of interest
         annotation_col(_str_): column name of the annotation
-
+        dataframe: pandas dataframe with annotations
     """
     index_stim=dataframe[annotation_col]==annotation
     index_final=dataframe.index[index_stim]+1
