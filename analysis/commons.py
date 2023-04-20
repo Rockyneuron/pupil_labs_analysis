@@ -45,7 +45,7 @@ def extract_annotations_timestamps(annotation,annotation_col,dataframe):
     start_row=dataframe[index_stim]
     end_row=dataframe.iloc[index_final]
 
-    return start_row, end_row
+    return start_row, end_row, index_final-2
 
 def filter_rows_by_temporal_values(dataframe,time_column,ini_value,end_value):
     """Common funtion to return a segment of a dataframe filtered by the timestamps
