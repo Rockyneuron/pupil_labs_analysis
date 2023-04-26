@@ -97,12 +97,13 @@ def do_heatmap(image,gaze_on_surf_x,gaze_on_surf_y):
     plt.axis('off');
 
 
-def cubic_siplne_interpolation(x,y):
+def cubic_siplne_interpolation(x,x_interpolate,y):
     from scipy.interpolate import CubicSpline
 
     """Function to do cubic spline interpolation of a whole signal
     Args:
-        x (numpy array): xdata
+        x (numpy array): xdata to interpolate
+        x_interpolate: x data used for interpolation
         y (numpy array): _description_
         time_ini (init): _description_
         time_end (_type_): _description_
@@ -110,5 +111,5 @@ def cubic_siplne_interpolation(x,y):
     Returns:cubic spline interpilated signal
     """
     cs = CubicSpline(x, y)
-    interpolated_signal=cs(x)
+    interpolated_signal=cs(x_interpolate)
     return interpolated_signal
