@@ -84,11 +84,11 @@ def calculate_pupillometry(pupil_pd_frame,annotations_pd,recording_location,wind
     filter_events_surprise= annotations_pd['label'].str.contains('Surprise')
     filter_events_blank= annotations_pd['label'].str.contains('blank')
 
-    print("eye0 (right eye) data:")
-    display(pupil_right_eye[['pupil_timestamp', 'eye_id', 'confidence', 'norm_pos_x', 'norm_pos_y', 'diameter_3d']].head(10))
+    # print("eye0 (right eye) data:")
+    # display(pupil_right_eye[['pupil_timestamp', 'eye_id', 'confidence', 'norm_pos_x', 'norm_pos_y', 'diameter_3d']].head(10))
 
-    print("eye1 data (left eye) data:")
-    display(pupil_left_eye[['pupil_timestamp', 'eye_id', 'confidence', 'norm_pos_x', 'norm_pos_y', 'diameter_3d']].head(10))
+    # print("eye1 data (left eye) data:")
+    # display(pupil_left_eye[['pupil_timestamp', 'eye_id', 'confidence', 'norm_pos_x', 'norm_pos_y', 'diameter_3d']].head(10))
 
     # df to ankalyse
 
