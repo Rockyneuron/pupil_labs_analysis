@@ -135,3 +135,13 @@ def toc(tempBool=True):
 def tic():
     # Records a time in TicToc, marks the beginning of a time interval
     toc(False)
+
+def calculate_contrast(x,y):
+    """Function to calculate michealson contrast
+    Args:
+        x (_np.array_): _description_
+        y (_np.arry_): _description_
+    """
+    contrast=(x-y)/(x+y)
+    print(contrast)
+    return contrast
