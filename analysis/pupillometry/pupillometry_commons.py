@@ -132,7 +132,7 @@ def calculate_pupillometry(pupil_pd_frame,annotations_pd,recording_location,wind
     annotations_pd['timestamp_s']=annotations_pd['timestamp']-annotations_pd['timestamp'].values[0]
     
 
-#     Apply normalization
+    #Apply normalization
     pupil_left_eye_interpolated['diameter_3d_cubic_z_score']=nm.normalize(values=pupil_left_eye_interpolated['diameter_3d_cubic'],
                                                 type='z_score')
 
