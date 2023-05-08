@@ -16,7 +16,10 @@ nm=Normalization()
 
 
 
-def plot_pupil_with_events(pupil_df:pd.DataFrame,annotattion_df:pd.DataFrame,time_col:str='timestamp_s',signal_col:str='diameter_3d'):
+def plot_signal_with_events(signal_df:pd.DataFrame,
+                            annotattion_df:pd.DataFrame,
+                            time_col:str='timestamp_s',
+                            signal_col:str='diameter_3d'):
     """Function to plot annotations and overlaying the signal of interest
 
     Args:
@@ -25,10 +28,9 @@ def plot_pupil_with_events(pupil_df:pd.DataFrame,annotattion_df:pd.DataFrame,tim
         time_col (str): time column name of the dataframe
         signal_str (_type_): _description_
     """
-
     sns.set_theme()
     fig, ax=plt.subplots(1,)
-    ax.plot(pupil_df[time_col],pupil_df[signal_col],'.')
+    ax.plot(signal_df[time_col],signal_df[signal_col],'.')
     for  index, row in annotattion_df.iterrows():
         plt.axvline(row[time_col], color='r', label='axvline - full height')
         ax.text((row[time_col]),3,row['label'])
@@ -36,5 +38,5 @@ def plot_pupil_with_events(pupil_df:pd.DataFrame,annotattion_df:pd.DataFrame,tim
     ax.set_xlabel(f'{time_col}')
     ax.set_ylabel(f'{signal_col}')
     fig.set_size_inches((18, 5.5))
-
+    return fig,ax
 
