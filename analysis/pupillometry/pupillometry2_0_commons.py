@@ -337,10 +337,18 @@ def calculate_pupillometry(pupil_pd_frame:pd.DataFrame,
           sample_rate=122,
           onset_idx=6,
           stim_duration=1)
+        fig = plr_assets.plot(vel=True, acc=True, print_params=True)
+        ax=plt.gca()
+        ax.set_title(f'assets: {SUBJECT}')
+        fig.savefig(f'figures/{SUBJECT}_assets.png', dpi=300)
 
         plr_surprise = PLR(pupil_diameter_surprise_df,
                 sample_rate=122,
                 onset_idx=6,
                 stim_duration=1)
-        
-return prl_assets,plr_surprise,pupil_diameter_df,pupil_diameter_df_raw
+        fig = plr_surprise.plot(vel=True, acc=True, print_params=True)
+        ax=plt.gca()
+        ax.set_title(f'surprise: {SUBJECT}')
+        fig.savefig(f'figures/{SUBJECT}_surprise.png', dpi=300)
+
+        return (plr_assets.parameters().T,plr_surprise.parameters().T,pupil_diameter_df,pupil_diameter_df_raw)

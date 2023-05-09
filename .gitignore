@@ -6,3 +6,4 @@
 /analysis/gaze/data
 /analysis/pupillometry/__pycache__*
 /analysis/pupillometry/repos
+/analysis/pupillometry/figures
