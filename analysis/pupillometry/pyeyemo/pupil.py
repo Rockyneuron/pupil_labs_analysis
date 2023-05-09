@@ -5,7 +5,7 @@ from typing import Sequence
 
 
 class PLR:
-    """Class to handle data representing a pupil response to a flash of light.
+    """Class to handle data representing a pupil response. Adaptapdate from pyplr
 
     """
 
