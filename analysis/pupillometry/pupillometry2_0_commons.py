@@ -295,6 +295,7 @@ def calculate_pupillometry(pupil_pd_frame:pd.DataFrame,
         # Baseline norme
         # surpisr params
         # asset params
+        print(f'analysing:... {signal_str}')
         pupil_diameter_df=pd.DataFrame()#pd.DataFrame(data_dict,index=np.arange(0,800))
         for im,im_strip in zip(event,event_strip):
             initial_anotation,end_anotation,index_annotation=cm.extract_annotations_timestamps(im,'label',annotations_pd)
