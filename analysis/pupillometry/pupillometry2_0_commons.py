@@ -22,7 +22,6 @@ from IPython.display import display
 nm=Normalization()
 
 
-
 def plot_signal_with_events(signal_df:pd.DataFrame,
                             annotattion_df:pd.DataFrame,
                             time_col:str='timestamp_s',
@@ -336,18 +335,18 @@ def calculate_pupillometry(pupil_pd_frame:pd.DataFrame,
 
         #Extract asset parameters
         plr_assets = PLR(pupil_diameter_assets_df,
-          sample_rate=122,
+          sample_rate=int(SAMPLE_RATE),
           onset_idx=6,
-          stim_duration=1)
+          stim_duration=0)
         fig = plr_assets.plot(vel=True, acc=True, print_params=True)
         ax=plt.gca()
         ax.set_title(f'assets: {SUBJECT}')
         fig.savefig(f'figures/{SUBJECT}_assets.png', dpi=300)
 
         plr_surprise = PLR(pupil_diameter_surprise_df,
-                sample_rate=122,
+                sample_rate=int(SAMPLE_RATE),
                 onset_idx=6,
-                stim_duration=1)
+                stim_duration=0)
         fig = plr_surprise.plot(vel=True, acc=True, print_params=True)
         ax=plt.gca()
         ax.set_title(f'surprise: {SUBJECT}')
