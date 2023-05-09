@@ -322,8 +322,8 @@ def calculate_pupillometry(pupil_pd_frame:pd.DataFrame,
         filter_assets=[asset for asset in filter_assets if 'Asset' in asset ]
         filter_surprise=[asset for asset in filter_surprise if 'Surprise' in asset ]
 
-        pupil_diameter_assets_df=np.mean(pupil_diameter_df.reindex(columns=filter_assets).values,axis=1)
-        pupil_diameter_surprise_df=np.mean(pupil_diameter_df.reindex(columns=filter_surprise).values,axis=1)
+        pupil_diameter_assets_df=np.mean(pupil_diameter_df_raw.reindex(columns=filter_assets).values,axis=1)
+        pupil_diameter_surprise_df=np.mean(pupil_diameter_df_raw.reindex(columns=filter_surprise).values,axis=1)
         #Plot the events and suprise and save
         pc.plot_events_and_surprise(signal_df=pupil_diameter_df,
                                     filter_assets=filter_assets,
