@@ -14,7 +14,8 @@ class PLR:
                  plr: Sequence,
                  sample_rate: int,
                  onset_idx: int,
-                 stim_duration: int) -> None:
+                 stim_duration: int,
+                 baseline_duration:int) -> None:
         """Initialise the PLR data.
 
         Parameters
@@ -24,9 +25,14 @@ class PLR:
         sample_rate : int
             Frequency at which the data were sampled.
         onset_idx : int
-            Ordinal index matching the onset of the light stimulus.
+            Ordinal index matching the onset of the stimulus. Due to some lag
+            we leave by norm around 2 frames at 30Hz.
         stim_duration : int
             Duration of the light stimlus in seconds.
+        baseline_duration: int
+            Duration in frames of the samples used for the baseline.since the offset of
+            the stimulus. Using baseline normalization
+            Normally about 50ms. 
 
         Returns
         -------
@@ -37,6 +43,7 @@ class PLR:
         self.sample_rate = sample_rate
         self.onset_idx = onset_idx
         self.stim_duration = stim_duration
+        self.baseline_duration=baseline_duration
 
     def velocity_profile(self) -> np.array:
         """Return the velocity profile of the PLR. Assumes the samples are
@@ -61,7 +68,7 @@ class PLR:
         """Return the average pupil size between the start of s and onset_idx.
 
         """
-        return np.mean(self.plr[0:self.onset_idx])
+        return np.mean(self.plr[self.onset_idx:self.baseline_duration])
 
     def pupil_size_at_onset(self) -> float:
         """Return pupil size at stimulus onset.

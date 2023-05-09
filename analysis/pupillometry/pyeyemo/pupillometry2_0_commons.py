@@ -335,8 +335,9 @@ def calculate_pupillometry(pupil_pd_frame:pd.DataFrame,
         #Extract asset parameters
         plr_assets = PLR(pupil_diameter_assets_df,
           sample_rate=int(SAMPLE_RATE),
-          onset_idx=6,
-          stim_duration=0)
+          onset_idx=frames_norm,
+          stim_duration=6,
+          baseline_duration=frames_norm)
         fig = plr_assets.plot(vel=True, acc=True, print_params=True)
         ax=plt.gca()
         ax.set_title(f'assets: {SUBJECT}')
@@ -344,8 +345,8 @@ def calculate_pupillometry(pupil_pd_frame:pd.DataFrame,
 
         plr_surprise = PLR(pupil_diameter_surprise_df,
                 sample_rate=int(SAMPLE_RATE),
-                onset_idx=6,
-                stim_duration=0)
+                onset_idx=frames_norm,
+                stim_duration=6)
         fig = plr_surprise.plot(vel=True, acc=True, print_params=True)
         ax=plt.gca()
         ax.set_title(f'surprise: {SUBJECT}')
