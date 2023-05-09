@@ -1,4 +1,3 @@
-from IPython.display import display
 import pandas as pd 
 import numpy as np
 from pathlib import Path
@@ -10,8 +9,15 @@ import sys
 sys.path.append('../')
 import commons as cm
 from data_curation import Normalization
-from pandasql import sqldf
+import pupillometry_commons as cp
+from itertools import compress
 import json
+import pupillometry2_0_commons as pc
+import importlib
+from pyplr.plr import PLR
+from pyplr import graphing
+from pyplr import preproc
+from pyplr import utils
 nm=Normalization()
 
 
@@ -79,90 +85,140 @@ def plot_events_and_surprise(signal_df:pd.DataFrame,
     fig.tight_layout()
     fig.savefig(f'figures/{subject}_data_assets.png', dpi=300)
         
-    def extract_eye_data(pupil_df:pd.DataFrame,eye_id: str = 'best',
+def extract_eye_data(pupil_df:pd.DataFrame,eye_id: str = 'best',
                method: str = 'pye3d 0.3.0 real-time',confidence_thr: float=0.95)-> pd.DataFrame:
-        # TODO: Refactor function in smaller chunks-- clean code
-        """Function to extract pupil data for eye of interest. 
-        Left eye, right eye or best eye can be extracted for further analysis
+    # TODO: Refactor function in smaller chunks-- clean code
+    """Function to extract pupil data for eye of interest. 
+    Left eye, right eye or best eye can be extracted for further analysis
 
-        Args:
-            pupil_df (pd.DataFrame): pupil pandas dataframe
-            eye_id (str, optional): _description_. Defaults to 'best'.
-            method (str, optional): _description_. Defaults to 'pye3d 0.3.0 real-time'.
-            confidence_thr: Confidence thershold for data qualiltu filtering. Deafults to 0.95
+    Args:
+        pupil_df (pd.DataFrame): pupil pandas dataframe
+        eye_id (str, optional): _description_. Defaults to 'best'.
+        method (str, optional): _description_. Defaults to 'pye3d 0.3.0 real-time'.
+        confidence_thr: Confidence thershold for data qualiltu filtering. Deafults to 0.95
 
-        Raises:
-            ValueError: a string must be put to indicate if we are using left, right eye or best
+    Raises:
+        ValueError: a string must be put to indicate if we are using left, right eye or best
 
-        Returns:
-            pd.DataFrame: pandas dataframe with pupil data of interest
-        """
-        global SAMPLE_RATE
-        pupil_df = pupil_df.loc[pupil_df.method.str.contains(method)]
+    Returns:
+        pd.DataFrame: pandas dataframe with pupil data of interest
+    """
+    global SAMPLE_RATE
+    pupil_df = pupil_df.loc[pupil_df.method.str.contains(method)]
 
-        pupil_left_eye=pupil_df.loc[(pupil_pd_frame['eye_id']==1) & (pupil_pd_frame['confidence']>=confidence_thr)]
-        pupil_right_eye=pupil_df.loc[(pupil_pd_frame['eye_id']==0) & (pupil_pd_frame['confidence']>=confidence_thr)]
+    pupil_left_eye=pupil_df.loc[(pupil_df['eye_id']==1) & (pupil_df['confidence']>=confidence_thr)]
+    pupil_right_eye=pupil_df.loc[(pupil_df['eye_id']==0) & (pupil_df['confidence']>=confidence_thr)]
 
-        blinks_left_eye=pupil_df.loc[(pupil_pd_frame['eye_id']==1) & (pupil_pd_frame['confidence']< confidence_thr)]
-        blinks_right_eye=pupil_df.loc[(pupil_pd_frame['eye_id']==0) & (pupil_pd_frame['confidence']< confidence_thr)]
-
-
-        ##  Explore blinks and Asses data quality, are there many regions with data gaps? 
-        parts = list(recording_location.parts)
-        parts=parts[0:-2]
-        parts=Path(*parts)
-        f = open(parts.joinpath('info.player.json'))
-        data = json.load(f)
-        time_whole_recording=data['duration_s']
-        time_roi_left=abs(pupil_left_eye['pupil_timestamp'].values[-1]-pupil_left_eye['pupil_timestamp'].values[0])
-        time_roi_right=abs(pupil_right_eye['pupil_timestamp'].values[-1]-pupil_right_eye['pupil_timestamp'].values[0])
-
-        pupil_sampling_freq_left=(pupil_left_eye.shape[0]+blinks_left_eye.shape[0])/time_roi_left
-        pupil_sampling_freq_right=(pupil_right_eye.shape[0]+blinks_right_eye.shape[0])/time_roi_right 
-        print(f'time of the whole recording is {time_whole_recording}')
-        print(f'time after anottaion cutting {time_roi_left:.2f}s for left eye and {time_roi_right:.2f}s for right eye')
-        print('sampling frequency for right eye is {}'.format(pupil_sampling_freq_right)) 
-        print('sampling frequency for left eye is {}'.format(pupil_sampling_freq_left)) 
-        # Closing file
-        f.close()
-
-        ### Asses data quality
-        total_blinks_left=blinks_left_eye.shape[0]/pupil_sampling_freq_left
-        total_blinks_right=blinks_right_eye.shape[0]/pupil_sampling_freq_right
-        print(f'Total blinks time left {total_blinks_left:.2f}s and right {total_blinks_right:.2f}s of a total of {time_roi_left:.2f}s left and {time_roi_right:.2f}s right')
-        print(f'Total blinks time left {total_blinks_left/time_roi_left:.2%} ')
-        print(f'Total blinks time right {total_blinks_right/time_roi_right:.2%} ')
-
-        if eye_id == 'left':
-            pupil_df = pupil_df[pupil_df.eye_id == 1]
-            SAMPLE_RATE=pupil_sampling_freq_left
-        elif eye_id == 'right':
-            pupil_df = pupil_df[pupil_df.eye_id == 0]
-            SAMPLE_RATE=pupil_sampling_freq_right
-        elif eye_id == 'best':
-            best = pupil_df.groupby(['eye_id'])['confidence'].mean()
-            display(best)
-            best=best.idxmax()
-            pupil_df = pupil_df[pupil_df.eye_id == best]
-            eye='left'if best==1 else 'right'
-            print(f'data from {eye} eye was selected')
-            SAMPLE_RATE=pupil_sampling_freq_left if best==1 else pupil_sampling_freq_right
-        else:
-            raise ValueError('Eye must be "left", "right" or "best".')
-        print('Loaded {} samples'.format(len(pupil_df)))
-        return pupil_df
+    blinks_left_eye=pupil_df.loc[(pupil_df['eye_id']==1) & (pupil_df['confidence']< confidence_thr)]
+    blinks_right_eye=pupil_df.loc[(pupil_df['eye_id']==0) & (pupil_df['confidence']< confidence_thr)]
 
 
-    def calculate_pupillometry(pupil_pd_frame,annotations_pd,recording_location,window_s=2,seconds_norm=0.05,signal_str='diameter_3d_z_score'):
+    ##  Explore blinks and Asses data quality, are there many regions with data gaps? 
+    parts = list(RECORDING_LOCATION.parts)
+    parts=parts[0:-2]
+    parts=Path(*parts)
+    f = open(parts.joinpath('info.player.json'))
+    data = json.load(f)
+    time_whole_recording=data['duration_s']
+    time_roi_left=abs(pupil_left_eye['pupil_timestamp'].values[-1]-pupil_left_eye['pupil_timestamp'].values[0])
+    time_roi_right=abs(pupil_right_eye['pupil_timestamp'].values[-1]-pupil_right_eye['pupil_timestamp'].values[0])
 
-        # Cut data by annotations of interest
+    pupil_sampling_freq_left=(pupil_left_eye.shape[0]+blinks_left_eye.shape[0])/time_roi_left
+    pupil_sampling_freq_right=(pupil_right_eye.shape[0]+blinks_right_eye.shape[0])/time_roi_right 
+    print(f'time of the whole recording is {time_whole_recording}')
+    print(f'time after anottaion cutting {time_roi_left:.2f}s for left eye and {time_roi_right:.2f}s for right eye')
+    print('sampling frequency for right eye is {}'.format(pupil_sampling_freq_right)) 
+    print('sampling frequency for left eye is {}'.format(pupil_sampling_freq_left)) 
+    # Closing file
+    f.close()
+
+    ### Asses data quality
+    total_blinks_left=blinks_left_eye.shape[0]/pupil_sampling_freq_left
+    total_blinks_right=blinks_right_eye.shape[0]/pupil_sampling_freq_right
+    print(f'Total blinks time left {total_blinks_left:.2f}s and right {total_blinks_right:.2f}s of a total of {time_roi_left:.2f}s left and {time_roi_right:.2f}s right')
+    print(f'Total blinks time left {total_blinks_left/time_roi_left:.2%} ')
+    print(f'Total blinks time right {total_blinks_right/time_roi_right:.2%} ')
+
+    if eye_id == 'left':
+        pupil_df = pupil_df[pupil_df.eye_id == 1]
+        SAMPLE_RATE=pupil_sampling_freq_left
+    elif eye_id == 'right':
+        pupil_df = pupil_df[pupil_df.eye_id == 0]
+        SAMPLE_RATE=pupil_sampling_freq_right
+    elif eye_id == 'best':
+        best = pupil_df.groupby(['eye_id'])['confidence'].mean()
+        display(best)
+        best=best.idxmax()
+        pupil_df = pupil_df[pupil_df.eye_id == best]
+        eye='left'if best==1 else 'right'
+        print(f'data from {eye} eye was selected')
+        SAMPLE_RATE=pupil_sampling_freq_left if best==1 else pupil_sampling_freq_right
+    else:
+        raise ValueError('Eye must be "left", "right" or "best".')
+    print('Loaded {} samples'.format(len(pupil_df)))
+    return pupil_df
+
+def blink_cleaning(pupil_df:pd.DataFrame,
+                   pupil_cols:list,
+                   confidence_thr:float):
+    # Make figure for processing
+    f, axs = graphing.pupil_preprocessing_figure(nrows=5, subject=SUBJECT)
+
+    # Plot the raw data
+    pupil_df[pupil_cols].plot(title='Raw', ax=axs[0], legend=True)
+    axs[0].legend(loc='center right', labels=['mm', 'pixels'])
+
+    # Mask first derivative
+    pupil_df = preproc.mask_pupil_first_derivative(
+        pupil_df, threshold=3.0, mask_cols=pupil_cols)
+    pupil_df[pupil_cols].plot(
+        title='Masked 1st deriv (3*SD)', ax=axs[1], legend=False)
+
+    # Mask confidence
+    pupil_df = preproc.mask_pupil_confidence(
+        pupil_df, threshold=confidence_thr, mask_cols=pupil_cols)
+    pupil_df[pupil_cols].plot(
+        title=f'Masked confidence (<{confidence_thr})', ax=axs[2], legend=False)
+
+    # Interpolate
+    pupil_df = preproc.interpolate_pupil(
+        pupil_df, interp_cols=pupil_cols)
+    pupil_df[pupil_cols].plot(
+        title='Linear interpolation', ax=axs[3], legend=False)
+
+    # Smooth
+    pupil_df = preproc.butterworth_series(
+        pupil_df, fields=pupil_cols, filt_order=3,
+        cutoff_freq=4/(SAMPLE_RATE/2))
+    pupil_df[pupil_cols].plot(
+        title='3rd order Butterworth filter with 4 Hz cut-off',
+        ax=axs[4], legend=False);
+
+
+    f.savefig(f'figures/{SUBJECT}_Blinks.png', dpi=300)
+    return pupil_df
+
+
+def calculate_pupillometry(pupil_pd_frame:pd.DataFrame,
+                           annotations_pd:pd.DataFrame,
+                           recording_location:Path,
+                           confidence_thr:float,
+                           window_s:int=2,
+                           seconds_norm:float=0.05,
+                           signal_str:str='diameter_3d_z_score',
+                           subject:str='subject'):
+        
+        global RECORDING_LOCATION
+        global SUBJECT
+        RECORDING_LOCATION=recording_location
+        SUBJECT=subject
+
+        #####------------ Cut data by annotations of interest-----------------######
+
         event_initial=annotations_pd['label'].values[0]
-        event_final=annotations_pd['label'].values[-1]
 
         initial_anotation,_,_=cm.extract_annotations_timestamps(event_initial,'label',annotations_pd)
         end_anotation=annotations_pd.iloc[-1]
-        display(initial_anotation)
-        display(end_anotation)
 
         pupil_pd_frame=cm.filter_rows_by_temporal_values(
                 dataframe=pupil_pd_frame,
@@ -187,6 +243,8 @@ def plot_events_and_surprise(signal_df:pd.DataFrame,
 
         filter_events=annotations_pd['label'].str.contains('Asset') | annotations_pd['label'].str.contains('Control') | annotations_pd['label'].str.contains('Surprise')
 
+
+        #Plot raw signal
         fig,ax=plot_signal_with_events(signal_df=pupil_df_raw,
                                 annotattion_df=annotations_pd[filter_events],
                                 time_col='timestamp_s',
@@ -194,3 +252,95 @@ def plot_events_and_surprise(signal_df:pd.DataFrame,
         ax.set_title(f'raw data for subject: {subject}')
 
         fig.savefig(f'figures/{subject}_Raw.png', dpi=300)
+
+
+        #Blink Cleaning
+        pupil_df=blink_cleaning(pupil_df=pupil_df_raw,
+                                pupil_cols=['diameter_3d'],
+                                confidence_thr=confidence_thr)
+        
+        pupil_df['diameter_3d_z_score']=nm.normalize(values=pupil_df['diameter_3d'],
+                                                type='z_score')
+        
+
+        #Analysis for all assets
+        #First filter events
+        filter_events=annotations_pd['label'].str.contains('Asset') | annotations_pd['label'].str.contains('Control') | annotations_pd['label'].str.contains('Surprise')
+
+        #Extract number of freames for baseline norm
+        frames_norm=np.round(seconds_norm*SAMPLE_RATE).astype(int)
+        win_norm=range(frames_norm)
+        print('Initial frames used for normalization = {} correspond to {}s'.format(frames_norm,seconds_norm))
+
+        #Extract number of frames for window of interest
+        window_frames=np.round(window_s*SAMPLE_RATE).astype(int)
+        print('Windows frames of interest   = {} correspond to {}s'.format(window_frames,window_s))
+        window=range(0,window_frames)
+        time_x=np.linspace(0,window_s,window_frames)
+
+        # For Assets only window size data
+        event=annotations_pd.loc[filter_events,['label']].values.flatten()
+        event_strip=[image.split('.')[0] for image in event] #remove .tiiff
+
+        #Dictionaries to create dataframes
+        data_dict=dict([(key,[None]) for key in event_strip])# dict with empty keys 
+        data_dict_raw=dict([(key,[None]) for key in event_strip])# dict with empty keys 
+        data_dict_params=dict([(key,[None]) for key in event_strip])# dict with empty keys 
+
+
+        #Proceed withg the analysis
+        #4 dataframes returned:
+        # Raw data
+        # Baseline norme
+        # surpisr params
+        # asset params
+        pupil_diameter_df=pd.DataFrame()#pd.DataFrame(data_dict,index=np.arange(0,800))
+        for im,im_strip in zip(event,event_strip):
+            initial_anotation,end_anotation,index_annotation=cm.extract_annotations_timestamps(im,'label',annotations_pd)
+            segmented_df=cm.filter_rows_by_temporal_values(
+                dataframe=pupil_df,
+                time_column='pupil_timestamp',
+                ini_value=initial_anotation['timestamp'].values[0],
+                end_value=end_anotation['timestamp'].values[0]
+                )
+            segmented_df=segmented_df.iloc[window]
+            win_blank=segmented_df.iloc[win_norm]
+            asset_norm=segmented_df[signal_str]-win_blank[signal_str].mean()
+            asset_raw=segmented_df[signal_str]
+
+            #Add raw and basilenimo norm values to dictionaries
+            data_dict[im_strip]=asset_norm.values
+            data_dict_raw[im_strip]=asset_raw.values
+
+        #Create dataframes of interest
+        pupil_diameter_df=pd.DataFrame(data_dict)
+        pupil_diameter_df_raw=pd.DataFrame(data_dict_raw)
+
+        #To filter assets
+        filter_assets=list(pupil_diameter_df.columns)
+        filter_surprise=list(pupil_diameter_df.columns)
+        filter_assets=[asset for asset in filter_assets if 'Asset' in asset ]
+        filter_surprise=[asset for asset in filter_surprise if 'Surprise' in asset ]
+
+        pupil_diameter_assets_df=np.mean(pupil_diameter_df.reindex(columns=filter_assets).values,axis=1)
+        pupil_diameter_surprise_df=np.mean(pupil_diameter_df.reindex(columns=filter_surprise).values,axis=1)
+        #Plot the events and suprise and save
+        pc.plot_events_and_surprise(signal_df=pupil_diameter_df,
+                                    filter_assets=filter_assets,
+                                    filter_surprise=filter_surprise,
+                                    time_x=time_x,
+                                    subject=subject
+                                    )
+
+        #Extract asset parameters
+        plr_assets = PLR(pupil_diameter_assets_df,
+          sample_rate=122,
+          onset_idx=6,
+          stim_duration=1)
+
+        plr_surprise = PLR(pupil_diameter_surprise_df,
+                sample_rate=122,
+                onset_idx=6,
+                stim_duration=1)
+        
+return prl_assets,plr_surprise,pupil_diameter_df,pupil_diameter_df_raw
