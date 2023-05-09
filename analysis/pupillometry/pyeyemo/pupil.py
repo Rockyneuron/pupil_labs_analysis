@@ -68,7 +68,7 @@ class PLR:
         """Return the average pupil size between the start of s and onset_idx.
 
         """
-        return np.mean(self.plr[self.onset_idx:self.baseline_duration])
+        return np.mean(self.plr[self.onset_idx:self.onset_idx+self.baseline_duration])
 
     def pupil_size_at_onset(self) -> float:
         """Return pupil size at stimulus onset.
