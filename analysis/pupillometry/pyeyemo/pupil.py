@@ -82,7 +82,7 @@ class PLR:
 
         """
         b = self.pupil_size_at_onset()
-        threshold = b - (b * .01)
+        threshold = -0.05#b - (b * .01)
         lidx = np.argmax(self.plr[self.onset_idx:] < threshold)
         lidx += self.onset_idx
         return lidx

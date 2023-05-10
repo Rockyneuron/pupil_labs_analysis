@@ -24,7 +24,8 @@ nm=Normalization()
 def plot_signal_with_events(signal_df:pd.DataFrame,
                             annotattion_df:pd.DataFrame,
                             time_col:str='timestamp_s',
-                            signal_col:str='diameter_3d'):
+                            signal_col:str='diameter_3d'
+                            ):
     """Function to plot annotations and overlaying the signal of interest
 
     Args:
@@ -205,7 +206,8 @@ def calculate_pupillometry(pupil_pd_frame:pd.DataFrame,
                            window_s:int=2,
                            seconds_norm:float=0.05,
                            signal_str:str='diameter_3d_z_score',
-                           subject:str='subject'):
+                           subject:str='subject',
+                           baseline_correction:str='no'):
         
         global RECORDING_LOCATION
         global SUBJECT
@@ -322,8 +324,14 @@ def calculate_pupillometry(pupil_pd_frame:pd.DataFrame,
         filter_assets=[asset for asset in filter_assets if 'Asset' in asset ]
         filter_surprise=[asset for asset in filter_surprise if 'Surprise' in asset ]
 
-        pupil_diameter_assets_df=np.mean(pupil_diameter_df_raw.reindex(columns=filter_assets).values,axis=1)
-        pupil_diameter_surprise_df=np.mean(pupil_diameter_df_raw.reindex(columns=filter_surprise).values,axis=1)
+        if baseline_correction=='no':
+            pupil_diameter_assets_df=np.mean(pupil_diameter_df_raw.reindex(columns=filter_assets).values,axis=1)
+            pupil_diameter_surprise_df=np.mean(pupil_diameter_df_raw.reindex(columns=filter_surprise).values,axis=1)
+        elif baseline_correction=='yes':
+            pupil_diameter_assets_df=np.mean(pupil_diameter_df.reindex(columns=filter_assets).values,axis=1)
+            pupil_diameter_surprise_df=np.mean(pupil_diameter_df.reindex(columns=filter_surprise).values,axis=1)
+        else:
+            raise ValueError('Inocrrect baseline correction parameter')
         #Plot the events and suprise and save
         plot_events_and_surprise(signal_df=pupil_diameter_df,
                                     filter_assets=filter_assets,
@@ -336,7 +344,7 @@ def calculate_pupillometry(pupil_pd_frame:pd.DataFrame,
         plr_assets = PLR(pupil_diameter_assets_df,
           sample_rate=int(SAMPLE_RATE),
           onset_idx=frames_norm,
-          stim_duration=6,
+          stim_duration=window_s,
           baseline_duration=frames_norm)
         fig = plr_assets.plot(vel=True, acc=True, print_params=True)
         ax=plt.gca()
@@ -346,7 +354,7 @@ def calculate_pupillometry(pupil_pd_frame:pd.DataFrame,
         plr_surprise = PLR(pupil_diameter_surprise_df,
                 sample_rate=int(SAMPLE_RATE),
                 onset_idx=frames_norm,
-                stim_duration=6,
+                stim_duration=window_s,
                 baseline_duration=frames_norm)
         fig = plr_surprise.plot(vel=True, acc=True, print_params=True)
         ax=plt.gca()
