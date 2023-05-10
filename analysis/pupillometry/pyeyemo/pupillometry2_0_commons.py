@@ -18,6 +18,7 @@ from pyplr import graphing
 from pyplr import preproc
 from pyplr import utils
 from IPython.display import display
+
 nm=Normalization()
 
 
