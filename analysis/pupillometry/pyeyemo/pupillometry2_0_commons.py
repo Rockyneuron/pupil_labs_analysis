@@ -328,9 +328,11 @@ def calculate_pupillometry(pupil_pd_frame:pd.DataFrame,
         if baseline_correction=='no':
             pupil_diameter_assets_df=np.mean(pupil_diameter_df_raw.reindex(columns=filter_assets).values,axis=1)
             pupil_diameter_surprise_df=np.mean(pupil_diameter_df_raw.reindex(columns=filter_surprise).values,axis=1)
+            pupil_diameter_all_df=pupil_diameter_df_raw
         elif baseline_correction=='yes':
             pupil_diameter_assets_df=np.mean(pupil_diameter_df.reindex(columns=filter_assets).values,axis=1)
             pupil_diameter_surprise_df=np.mean(pupil_diameter_df.reindex(columns=filter_surprise).values,axis=1)
+            pupil_diameter_all_df=pupil_diameter_df
         else:
             raise ValueError('Inocrrect baseline correction parameter')
         #Plot the events and suprise and save
