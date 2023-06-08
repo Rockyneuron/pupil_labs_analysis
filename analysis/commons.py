@@ -145,3 +145,40 @@ def calculate_contrast(x,y):
     contrast=(x-y)/(x+y)
     print(contrast)
     return contrast
+
+def linear_correlation(x:np.array,y:np.array,color='blue'):
+    """Function to calculate and plot the linear correlation of two variables
+
+    Args:
+        x (np.array): x variable
+        y (np.array): y variable
+    """
+    import numpy as np
+    import matplotlib.pyplot as plt
+    from scipy.stats import pearsonr
+
+    # Calculate linear fit
+    slope, intercept = np.polyfit(x, y, 1)
+
+    # Calculate Pearson correlation coefficient
+    corr_coef, _ = pearsonr(x, y)
+
+    # Plot the data points
+    plt.scatter(x, y, color=color, label='Data Points')
+
+    # Plot the linear fit line
+    plt.plot(x, slope*x + intercept, color='red', label='Linear Fit')
+
+    # Display the Pearson correlation coefficient
+    # plt.text(1, 8, 'Correlation Coefficient: {:.2f}'.format(corr_coef), fontsize=12)
+
+    # Set plot title and labels
+    plt.title(f'Linear Fit and Pearson Correlation= {corr_coef}')
+    plt.xlabel('x')
+    plt.ylabel('y')
+
+    # Add legend
+    plt.legend()
+
+    return corr_coef,slope, intercept
+    

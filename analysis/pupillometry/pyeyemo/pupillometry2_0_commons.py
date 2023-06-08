@@ -322,7 +322,7 @@ def calculate_pupillometry(pupil_pd_frame:pd.DataFrame,
         #To filter assets
         filter_assets=list(pupil_diameter_df.columns)
         filter_surprise=list(pupil_diameter_df.columns)
-        filter_assets=[asset for asset in filter_assets if 'Asset' in asset ]
+        filter_assets=[asset for asset in filter_assets if 'blank' in asset ]
         filter_surprise=[asset for asset in filter_surprise if 'Surprise' in asset ]
 
         if baseline_correction=='no':
