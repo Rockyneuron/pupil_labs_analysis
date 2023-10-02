@@ -162,6 +162,21 @@ def extract_eye_data(pupil_df:pd.DataFrame,eye_id: str = 'best',
 def blink_cleaning(pupil_df:pd.DataFrame,
                    pupil_cols:list,
                    confidence_thr:float):
+    """Blink cleaning function using the method similar to the one described in the pyplr 
+    documentation.
+        1) Mask first derivative
+        2) Mask condfidence
+        3) Interpolate
+        4) Smooth with butterworth filter
+
+    Args:
+        pupil_df (pd.DataFrame): _description_
+        pupil_cols (list): _description_
+        confidence_thr (float): _description_
+
+    Returns:
+        _type_: _description_
+    """
     # Make figure for processing
     f, axs = graphing.pupil_preprocessing_figure(nrows=5, subject=SUBJECT)
 
