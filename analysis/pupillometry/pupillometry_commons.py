@@ -10,7 +10,7 @@ import sys
 sys.path.append('../')
 import commons as cm
 from data_curation import Normalization
-from pandasql import sqldf
+# from pandasql import sqldf
 import json
 nm=Normalization()
 

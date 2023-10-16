@@ -36,11 +36,12 @@ def plot_signal_with_events(signal_df:pd.DataFrame,
         signal_str (_type_): _description_
     """
     sns.set_theme()
+    heigth_text=round((max(signal_df[signal_col])))
     fig, ax=plt.subplots(1,)
     ax.plot(signal_df[time_col],signal_df[signal_col],'.')
     for  index, row in annotattion_df.iterrows():
         plt.axvline(row[time_col], color='r', label='axvline - full height')
-        ax.text((row[time_col]),3,row['label'])
+        ax.text((row[time_col]),heigth_text,row['label'])
     ax.set_title('pupil diameter and events')    
     ax.set_xlabel(f'{time_col}')
     ax.set_ylabel(f'{signal_col}')
