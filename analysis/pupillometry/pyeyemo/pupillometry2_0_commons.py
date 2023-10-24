@@ -76,6 +76,7 @@ def plot_events_and_surprise(signal_df:pd.DataFrame,
     ax[1].set_title('Raw surprise and mean pupilometry speed')
     ax[1].set_xlabel('time (s)')
     ax[1].set_ylabel('diameter (mm)')
+    ax[1].legend(filter_surprise)
 
     ax[2].errorbar(time_x,np.mean(mat,axis=1),np.std(mat_std,axis=1),linewidth=2,color='blue')
     ax[2].errorbar(time_x,np.mean(mat2,axis=1),np.std(mat2_std,axis=1),linewidth=0.5,color='red')
@@ -85,7 +86,7 @@ def plot_events_and_surprise(signal_df:pd.DataFrame,
 
     fig.set_size_inches((18, 18))
     fig.tight_layout()
-    fig.savefig(f'figures/{subject}_data_assets.png', dpi=300)
+    # fig.savefig(f'figures/{subject}_data_assets.png', dpi=300)
         
 def extract_eye_data(pupil_df:pd.DataFrame,eye_id: str = 'best',
                method: str = 'pye3d 0.3.0 real-time',confidence_thr: float=0.95)-> pd.DataFrame:

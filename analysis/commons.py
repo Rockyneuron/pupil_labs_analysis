@@ -40,7 +40,7 @@ def extract_annotations_timestamps(annotation,annotation_col,dataframe):
         dataframe: pandas dataframe with annotations
     """
     index_stim=dataframe[annotation_col]==annotation
-    index_final=dataframe.index[index_stim]+1
+    index_final=np.where(index_stim.values==True)[0][0]+1
 
     start_row=dataframe[index_stim]
     end_row=dataframe.iloc[index_final]
