@@ -21,9 +21,50 @@ import sys
 sys.path.append('../')
 import commons as cm
 from data_curation import Normalization
-from pandasql import sqldf
 from IPython.display import display
+from itertools import compress
+
 nm=Normalization()
+
+def extract_session_path_pupil_labs(recording_location:str,subject:str):
+    """Function to retrieve data paths for each subject of annation dataframes,
+    fixations, fixations on surface and so on from pupil labs.
+
+    Args:
+        recording_location (str): 
+        subject (str): _description_
+
+    Returns:
+        _dict_: dictionary with the data paths of the csvs of interest
+                {'annotations':annotations_csv,
+                 'fixations':fixations_csv,
+                 'fixations_surf':fixations_surf_dir}
+    """
+    #Load data in folders
+    recording_folder=[record for record in os.listdir(recording_location)  if '00' in record]
+    print(recording_folder)
+    index_aux = list(map(lambda x: not('_' in x), recording_folder))
+    recording_folder=list(compress(recording_folder,index_aux))
+    #Load data in folders
+    if len(recording_folder)>1:
+        ValueError('Ambiguty in folder of experiment')
+    recording_location=recording_location.joinpath(recording_folder[0],'exports')
+    recording_location_raw=recording_location.joinpath(recording_folder[0],'exports')
+    export_folder=[record for record in os.listdir(recording_location)  if '00' in record]
+    if len(export_folder)>1:
+        ValueError('Ambiguty in folder of exports')
+    recording_location=recording_location.joinpath(export_folder[0])
+    fixations_surf_csv=[record for record in os.listdir(recording_location.joinpath('surfaces'))  if 'fixations_on_surface' in record][0]
+    fixations_surf_dir = os.path.join(recording_location, 'surfaces',fixations_surf_csv)
+
+    annotations_csv = os.path.join(recording_location,'annotations.csv')
+    fixations_csv = os.path.join(recording_location,'fixations.csv')
+
+    data_paths= {'annotations':annotations_csv,
+                 'fixations':fixations_csv,
+                 'fixations_surf':fixations_surf_dir}
+    
+    return data_paths
 
 def distance_x_y(x:pd.Series,y:pd.Series):
     """function to calculate the distance between two points
@@ -172,7 +213,7 @@ class Eye:
                             column='speed',
                             value=self.fixations['distance']/diff_word_time )
     
-    def saccade_angle(self,angle:str='degrees'):
+    def saccade_angle(self,angle:str='degrees_90_90'):
         """Calculate sacade angle
 
         Returns:
@@ -180,11 +221,28 @@ class Eye:
         """
         x=np.diff(self.fixations[self.x_col],prepend=0)
         y=np.diff(self.fixations[self.y_col],prepend=0)
+        self.fixations['angle_rad']=np.arctan2(y,x)
 
-        if angle=='degrees':
+        if angle=='degrees_90_90':
             self.fixations['angle']=np.arctan2(y,x)*180/np.pi
         if angle=='radians':
-            self.fixations['angle']=np.arctan2(y,x)
+            self.fixations['angle_rad']=np.arctan2(y,x)
+        if angle=='degrees_0_360':
+           self.fixations['angle']=np.arctan2(y,x)*180/np.pi
+        #    self.fixations.loc[self.fixations['angle']<0,['angle']]=self.fixations.loc[self.fixations['angle']<0,['angle']]+360
+           self.fixations['angle']=self.fixations['angle'].map(lambda x: x+360 if x<0 else x)
+    
+    def vertical_horizontal_sacades(self,vert:list[int]=[45,135,225,315]):
+        """Function to binary classify vertical==1 and horizontal==2 sacades
+
+        Args:
+            vert (list[int], optional): _description_. Defaults to [45,135,225,315].
+        """
+        self.fixations['verticality']=0
+        ori=self.fixations['angle']
+
+        self.fixations.loc[(ori>vert[0]) & (ori<vert[1]),['verticality']]=1
+        self.fixations.loc[(ori>vert[2]) & (ori<vert[3]),['verticality']]=1   
 
     @property
     def fixation(self):
