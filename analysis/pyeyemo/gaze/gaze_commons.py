@@ -25,6 +25,16 @@ from pandasql import sqldf
 from IPython.display import display
 nm=Normalization()
 
+def distance_x_y(x:pd.Series,y:pd.Series):
+    """function to calculate the distance between two points
+    Args:
+        x (pd.Series): array of x values 
+        y (pd.Series): array of y values
+    Returns:
+        _type_: _description_
+    """
+    return np.sqrt((np.diff(x)**2)+((np.diff(y))**2))
+
 
 def calculate_contrast(x,y):
     """Function to calculate michealson contrast
@@ -35,6 +45,16 @@ def calculate_contrast(x,y):
     contrast=(x-y)/(x+y)
     # print(contrast)
     return contrast
+
+def eliminate_duplicates(self,df:pd.DataFrame,column='fixation_id') ->None: 
+    """Eliminate duplicate values of columns
+
+    Args:
+        df (pd.DataFrame): _description_
+        column (str, optional): column to remove duplicates . Defaults to 'fixation_id'.
+    """
+    self.fixations=(df.drop_duplicates(subset=[column])
+            )
 
 def compute_vertical_index(vector_index):
     """Calculate vertical index from a vector of 0 and 1
@@ -94,10 +114,10 @@ def vertical_index(gaze_pd_frame,annotations_pd):
     return vertical_index_df
 
 class Eye:
-    
-    def __init__(self,subject='some_subject') -> None:
-        self.subject=subject
 
+    def __init__(self,name='some_subject') -> None:
+        self.name=name
+        
     def load_annotations(self,annotation_dir:str):
         """function to load annotations
         as pandas dataframe
@@ -110,4 +130,62 @@ class Eye:
         pandas dataframe
         """
         self.fixations_dir = fixations_dir
-        self.fixations=pd.read_csv(self.fixations_dir)        
+        self.fixations=pd.read_csv(self.fixations_dir)     
+
+    def eliminate_duplicates(self,df:pd.DataFrame,column:str='fixation_id') ->None: 
+        """Eliminate duplicate values of columns
+
+        Args:
+            df (pd.DataFrame): dataframe to remove duplicates
+            column (str, optional): column to remove duplicates . Defaults to 'fixation_id'.
+        """
+        self.fixations=(df.drop_duplicates(subset=[column])
+            )
+        
+    def distance_x_y(x:pd.Series,y:pd.Series):
+        """function to calculate the distance between two points
+        Args:
+            x (pd.Series): array of x values 
+            y (pd.Series): array of y values
+        Returns:
+            _type_: _description_
+        """
+        return np.sqrt((np.diff(x)**2)+((np.diff(y))**2))
+    
+    def calculate_distance(self,x_col:str='norm_pos_x',y_col:str='norm_pos_y'):
+        """Create distance column 
+
+        Args:
+            x_col (str, optional): x colmun values. Defaults to 'norm_pos_x'.
+            y_col (str, optional): y column values. Defaults to 'norm_pos_y'.
+        """
+        self.fixations['distance']=np.insert(distance_x_y(x=self.fixations[x_col],
+                                                          y=self.fixations[y_col]),0,0)
+        self.x_col=x_col
+        self.y_col=y_col
+        
+    def calculate_speed_saccades(self,time_col:str='world_timestamp'):
+
+        diff_word_time=np.diff(self.fixations[time_col],prepend=0)
+
+        self.fixations.insert(loc=self.fixations.shape[1],
+                            column='speed',
+                            value=self.fixations['distance']/diff_word_time )
+    
+    def saccade_angle(self,angle:str='degrees'):
+        """Calculate sacade angle
+
+        Returns:
+            _type_: _description_
+        """
+        x=np.diff(self.fixations[self.x_col],prepend=0)
+        y=np.diff(self.fixations[self.y_col],prepend=0)
+
+        if angle=='degrees':
+            self.fixations['angle']=np.arctan2(y,x)*180/np.pi
+        if angle=='radians':
+            self.fixations['angle']=np.arctan2(y,x)
+
+    @property
+    def fixation(self):
+        return self.fixation
