@@ -244,6 +244,30 @@ class Eye:
         self.fixations.loc[(ori>vert[0]) & (ori<vert[1]),['verticality']]=1
         self.fixations.loc[(ori>vert[2]) & (ori<vert[3]),['verticality']]=1   
 
+    def label_data_annotation(self,
+                              annotation_col:str='label',
+                              annotation_time_col:str='timestamp',
+                              label_name:str='asset',
+                              fixations_time_col_name:str='start_timestamp'):
+        """method that labels a a new colum with the label of a reference annotation dataframe. 
+        Basically i have 2 dataframes, with a similar temporal value range, and i want to assing those
+        anotattions to a new column in the time interval in which they are happening.
+        For this we turover the annotations_df to sort it by descending values, and then asing those annotation
+        to timestamps>= annotation_timestamp
+
+        Args:
+            annotation_col (str, optional): name of the annotation label column. Defaults to 'label'.
+            label_name (str, optional): name ofd the new column with the asiggned annotaiton. Defaults to 'asset'.
+            fixations_time_col_name (str, optional): name of the timestamp colum of the main df. Defaults to 'start_timestamp'.
+        """
+        self.fixations[label_name]=self.fixations[fixations_time_col_name]
+
+        for anotation in self.annotations.sort_values(by=[annotation_time_col],ascending=False).iterrows():
+             self.fixations[label_name]=self.fixations[label_name].map(lambda x: anotation[1][annotation_col]\
+                                                    if isinstance(x,float)\
+                                                    and (x>=anotation[1][annotation_time_col])
+                                                        else x)
+            
     @property
     def fixation(self):
         return self.fixation
