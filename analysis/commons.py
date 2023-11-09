@@ -64,6 +64,19 @@ def filter_rows_by_temporal_values(dataframe,time_column,ini_value,end_value):
     ]
     return segmented_df
 
+def filter_dataframe_by_annotations(df:pd.DataFrame,
+                                    inital_label:str='asset',
+                                    final_label:str='end_of_experiment',
+                                    filter_column:str='label'):
+
+    index_initial=df.loc[df[filter_column]==inital_label].index[0]
+    index_final=df.loc[df[filter_column]=='end_of_experiment']
+    if index_final.empty:
+        df=df.loc[index_initial::,:]
+    else:
+        df=df.loc[index_initial:index_final.index,:]
+    return df
+
 def do_heatmap(image,gaze_on_surf_x,gaze_on_surf_y):
     from scipy.ndimage.filters import gaussian_filter
 

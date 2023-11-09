@@ -23,6 +23,7 @@ import commons as cm
 from data_curation import Normalization
 from IPython.display import display
 from itertools import compress
+from mungling import DataMungling
 
 nm=Normalization()
 
@@ -154,7 +155,15 @@ def vertical_index(gaze_pd_frame,annotations_pd):
     vertical_index_df=pd.DataFrame(data_dict)
     return vertical_index_df
 
-class Eye:
+class Eye(DataMungling):
+
+    @property
+    def fixation(self):
+        return self.fixation
+    
+    # @set
+    # def labels(self):
+    #     self.labels
 
     def __init__(self,name='some_subject') -> None:
         self.name=name
@@ -249,7 +258,7 @@ class Eye:
                               annotation_time_col:str='timestamp',
                               label_name:str='asset',
                               fixations_time_col_name:str='start_timestamp'):
-        """method that labels a a new colum with the label of a reference annotation dataframe. 
+        """Method that labels a a new colum with the label of a reference annotation dataframe. 
         Basically i have 2 dataframes, with a similar temporal value range, and i want to assing those
         anotattions to a new column in the time interval in which they are happening.
         For this we turover the annotations_df to sort it by descending values, and then asing those annotation
@@ -267,7 +276,19 @@ class Eye:
                                                     if isinstance(x,float)\
                                                     and (x>=anotation[1][annotation_time_col])
                                                         else x)
-            
-    @property
-    def fixation(self):
-        return self.fixation
+    def cut_data_of_interest(self):
+
+        self.fixations=self.cut_dataframe_by_column_values(df=self.fixations,
+                                                            inital_label=self.annotations.iloc[0].label,
+                                                            final_label='end_of_experiment',
+                                                            filter_column='asset')
+    
+    def labels_to_analyse(self,labels:list[str]):
+        self.labels=labels
+    
+    def filter_labels(self,df:pd.Series):
+        self.annotation_list=self.filter_series_list_string(df=df,
+                                       label=self.labels)
+
+    def vertical_index(self):
+        pass
