@@ -290,5 +290,43 @@ class Eye(DataMungling):
         self.annotation_list=self.filter_series_list_string(df=df,
                                        label=self.labels)
 
-    def vertical_index(self):
-        pass
+    def vertical_index(self,window_analysis:float):
+        """Method to calculate vertical index.
+        using the veriticaility columnn to count the total
+        number of horizontal and vertical sacaddes. 
+        vi=(H-V)/(H+V)
+
+        Args:
+            window_analysis (float): _description_
+        """
+        
+        data_dict=dict([(key,[None]) for key in self.annotation_list])# dict with empty keys 
+        vertical_index_df=pd.DataFrame()#pd.DataFrame(data_dict,index=np.arange(0,800))
+        data_list=[]
+        for asset in self.annotation_list:
+            aux_df=self.fixations.query(f"asset == '{asset}'") #break table by asset name
+            time_0=aux_df['start_timestamp'].values[0]
+            segmented_df=cm.filter_rows_by_temporal_values(
+                    dataframe=aux_df,
+                    time_column='start_timestamp',
+                    ini_value=time_0,
+                    end_value=time_0+window_analysis
+                    )   
+            
+            verticality=segmented_df['verticality'].values
+            vi=self.compute_vertical_index(verticality)
+            data_dict[asset]=[vi]
+
+        self.vertical_index_df=pd.DataFrame(data_dict)
+
+
+    def compute_vertical_index(self,vector_index):
+        """Calculate vertical index from a vector of 0 and 1
+        Args:
+            vector_index (_type_): 0 and ones int numpy array vector
+        """
+        vertical=vector_index[vector_index==1].size
+        horizontal=vector_index[vector_index==0].size
+        vi=self.calculate_contrast(vertical,horizontal)
+        # print(f'vertical: {vertical}, horizontal: {horizontal},verticality: {vector_index}')
+        return vi

@@ -52,3 +52,13 @@ class DataMungling:
                 index=self.filter_series_string(df,name) | index
 
         return df[index]
+    
+
+    def calculate_contrast(self, x,y):
+        """Function to calculate michealson contrast
+        Args:
+            x (_np.array_): _description_
+            y (_np.arry_): _description_
+        """
+        contrast=(x-y)/(x+y)
+        return contrast
