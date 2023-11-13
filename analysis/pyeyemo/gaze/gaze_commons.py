@@ -167,7 +167,7 @@ class Eye(DataMungling):
 
     def __init__(self,name='some_subject') -> None:
         self.name=name
-        
+  
     def load_annotations(self,annotation_dir:str):
         """function to load annotations
         as pandas dataframe
@@ -330,3 +330,39 @@ class Eye(DataMungling):
         vi=self.calculate_contrast(vertical,horizontal)
         # print(f'vertical: {vertical}, horizontal: {horizontal},verticality: {vector_index}')
         return vi
+    
+    
+    def number_fixations_on_off_surface(self):
+        
+        data_quality_fixations=self.group_dataset['world_timestamp'].aggregate('count')
+        data_quality_fixations=data_quality_fixations[data_quality_fixations['asset'].str.contains('Asset',na=False)]
+
+        data_quality_fixations_on_surf=data_quality_fixations.query('on_surf == True').loc[:,'asset':'world_timestamp':2]
+        data_quality_fixations_on_surf.columns=['asset','fixation_on_surface']
+
+        data_quality_fixations_off_surf=data_quality_fixations.query('on_surf == False').loc[:,'asset':'world_timestamp':2]
+        data_quality_fixations_off_surf.columns=['asset','fixation_off_surface']
+        self.number_fixations=data_quality_fixations_on_surf.merge(data_quality_fixations_off_surf,\
+                                                                   on='asset',how='outer').fillna(0)
+        self.number_fixations['session']=self.name
+        #rearrange column order
+
+        cols = self.number_fixations.columns.tolist()
+        cols = cols[-1:] + cols[:-1]
+        self.number_fixations=self.number_fixations[cols]
+
+    def average_saccade_distance(self,col_name:str='distance'):
+        self.group_dataset[col_name].mean()
+
+    def average_sacade_speed(self,col_name:str='speed'):
+        self.group_dataset[col_name].mean()
+
+    def average_fixation_time(self,col_name:str='duration'):
+        self.group_dataset[col_name].mean()
+
+    def total_fixation_time(self,col_name:str'duration'):
+        self.group_dataset[col_name].sum()
+
+    def group_data(self,keys:list[str]=['asset','on_surf']):
+        self.group_dataset=self.fixations.groupby(keys,as_index=False)
+
