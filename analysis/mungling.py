@@ -32,7 +32,7 @@ class DataMungling:
         return df_final
 
     def filter_series_string(self,df:pd.Series,label:str='label'):
-        return df.str.contains(label) 
+        return df.str.contains(label,na=False) 
     
     def filter_series_list_string(self,df:pd.Series,label:list[str]):
         """Function to filfer a pd.Series by a common list of strings of 
@@ -43,7 +43,8 @@ class DataMungling:
             label (list[str]): list of strings
 
         Returns:
-            _type_: _description_
+            _df_: filtered pandas series datrame
+            _bool_: boolean index vector  
         """
         for n,name in enumerate(label):
             if n==0:
@@ -51,7 +52,7 @@ class DataMungling:
             else:
                 index=self.filter_series_string(df,name) | index
 
-        return df[index]
+        return (df[index], index)
     
 
     def calculate_contrast(self, x,y):
