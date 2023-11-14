@@ -174,6 +174,7 @@ class Eye(DataMungling):
         """
         self.annotations_csv = annotation_dir
         self.annotations=pd.read_csv(self.annotations_csv)
+        self.data_matrix=self.annotations
 
     def load_fixations(self,fixations_dir:str):
         """method to load fixations csv as 
@@ -287,8 +288,15 @@ class Eye(DataMungling):
         self.labels=labels
     
     def filter_labels(self,df:pd.Series):
-        self.annotation_list=self.filter_series_list_string(df=df,
+        self.annotation_list,annotation_index=self.filter_series_list_string(df=df,
                                        label=self.labels)
+        
+        # Main table filtered by asset where all data will be appended.
+
+        self.data_matrix=pd.DataFrame(self.annotation_list)
+        self.data_matrix['session']=self.name
+        self.data_matrix.rename(columns={self.data_matrix.columns[0]:'asset'},inplace=True)
+        self.data_matrix=self.data_matrix[['session','asset']]
 
     def vertical_index(self,window_analysis:float):
         """Method to calculate vertical index.
@@ -332,10 +340,11 @@ class Eye(DataMungling):
         return vi
     
     
-    def number_fixations_on_off_surface(self):
+    def  number_fixations_on_off_surface(self):
         
         data_quality_fixations=self.group_dataset['world_timestamp'].aggregate('count')
-        data_quality_fixations=data_quality_fixations[data_quality_fixations['asset'].str.contains('Asset',na=False)]
+        _,index=self.filter_series_list_string(data_quality_fixations['asset'],self.annotation_list) #obtain only those values that correspond to annoatations
+        data_quality_fixations=data_quality_fixations[index]
 
         data_quality_fixations_on_surf=data_quality_fixations.query('on_surf == True').loc[:,'asset':'world_timestamp':2]
         data_quality_fixations_on_surf.columns=['asset','fixation_on_surface']
@@ -344,25 +353,40 @@ class Eye(DataMungling):
         data_quality_fixations_off_surf.columns=['asset','fixation_off_surface']
         self.number_fixations=data_quality_fixations_on_surf.merge(data_quality_fixations_off_surf,\
                                                                    on='asset',how='outer').fillna(0)
-        self.number_fixations['session']=self.name
-        #rearrange column order
+        
+        self.data_matrix=self.data_matrix.merge(self.number_fixations,
+                                                on='asset',how='inner')
 
-        cols = self.number_fixations.columns.tolist()
-        cols = cols[-1:] + cols[:-1]
-        self.number_fixations=self.number_fixations[cols]
+    def average_saccade_distance(self,col_name:str='distance',new_col:str='mean_distance',how:str='left'):
+        self.mean_saccade_distance=self.group_dataset_on_surf[col_name].mean()
+        self.data_matrix=self.data_matrix.merge(self.mean_saccade_distance,on='asset',how=how)
+        self.data_matrix.rename(columns={self.data_matrix.columns[-1]:new_col},inplace=True)
 
-    def average_saccade_distance(self,col_name:str='distance'):
-        self.group_dataset[col_name].mean()
+    def average_sacade_speed(self,col_name:str='speed',new_col:str='mean_speed',how:str='left'):
+        self.mean_saccade_speed=self.group_dataset_on_surf[col_name].mean()
+        self.data_matrix=self.data_matrix.merge(self.mean_saccade_speed,on='asset',how=how)
+        self.data_matrix.rename(columns={self.data_matrix.columns[-1]:new_col},inplace=True)
 
-    def average_sacade_speed(self,col_name:str='speed'):
-        self.group_dataset[col_name].mean()
+    def average_fixation_time(self,col_name:str='duration',new_col:str='average_fixation',how:str='left'):
+        self.mean_fixation_time=self.group_dataset_on_surf[col_name].mean()
+        self.data_matrix=self.data_matrix.merge(self.mean_fixation_time,on='asset',how=how)
+        self.data_matrix.rename(columns={self.data_matrix.columns[-1]:new_col},inplace=True)
 
-    def average_fixation_time(self,col_name:str='duration'):
-        self.group_dataset[col_name].mean()
 
-    def total_fixation_time(self,col_name:str'duration'):
-        self.group_dataset[col_name].sum()
+    def total_fixation_time(self,col_name:str='duration',new_col:str='total_fixation',how:str='left'):
+        self.sum_fixation_time=self.group_dataset_on_surf[col_name].mean()
+        self.data_matrix=self.data_matrix.merge(self.sum_fixation_time,on='asset',how=how)
+        self.data_matrix.rename(columns={self.data_matrix.columns[-1]:new_col},inplace=True)
 
     def group_data(self,keys:list[str]=['asset','on_surf']):
         self.group_dataset=self.fixations.groupby(keys,as_index=False)
 
+    def group_data_on_surface(self,keys:list[str]=['asset']):
+        self.group_dataset_on_surf=self.fixations.query('on_surf == True').groupby(keys,as_index=False)
+
+    def test_data_table(self):
+        if self.annotation_list.shape[0] == self.data_matrix.shape[0]:
+            print('annotations are correct')
+        else:
+            raise Exception('Annotation and Data do not match')
+         
