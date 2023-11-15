@@ -161,6 +161,13 @@ class Eye(DataMungling):
     def fixation(self):
         return self.fixation
     
+    @property
+    def vertical_index_df(self):
+        return self._vertical_index_df
+    
+    @vertical_index_df.setter
+    def vertical_index_df(self,new_df):
+           self._vertical_index_df=new_df
     # @set
     # def labels(self):
     #     self.labels
@@ -374,7 +381,7 @@ class Eye(DataMungling):
 
 
     def total_fixation_time(self,col_name:str='duration',new_col:str='total_fixation',how:str='left'):
-        self.sum_fixation_time=self.group_dataset_on_surf[col_name].mean()
+        self.sum_fixation_time=self.group_dataset_on_surf[col_name].sum()
         self.data_matrix=self.data_matrix.merge(self.sum_fixation_time,on='asset',how=how)
         self.data_matrix.rename(columns={self.data_matrix.columns[-1]:new_col},inplace=True)
 
@@ -388,5 +395,6 @@ class Eye(DataMungling):
         if self.annotation_list.shape[0] == self.data_matrix.shape[0]:
             print('annotations are correct')
         else:
-            raise Exception('Annotation and Data do not match')
-         
+            raise Exception('Annotation and Data do noSt match')
+
+    

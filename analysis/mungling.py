@@ -2,6 +2,9 @@ import pandas as pd
 
 class DataMungling:
 
+    def __init__(self) -> None:
+        pass
+
     def cut_dataframe_by_column_values(self,
                                     df:pd.DataFrame=pd.DataFrame,
                                     inital_label:str='asset',
@@ -63,3 +66,34 @@ class DataMungling:
         """
         contrast=(x-y)/(x+y)
         return contrast
+
+    def refactor_df_to_categorical(self,df:pd.DataFrame,col_names:list[str]): 
+        """This function refactors any 2d matrix dataframe to a categorical dataframe
+        It takes the values of the index and the values of the colums as catetorical 
+        variables and the final value as a continous variable.
+
+        Args:
+            df (pd.DataFrame): _description_
+            col_names (list[str]): [index_column_name,column_var_name,variable name]
+
+        Returns:
+            _type_: a 3d categorical matrix with the columns ordered as in col_names.
+            col_names (list[str]): [index_column_name,column_var_name,variable name]
+        """
+
+        series_list=[]
+        df.reset_index(inplace=True)
+        df=df.rename(columns={'index':col_names[0]})
+
+        for row in df.iterrows():
+            df_aux=pd.DataFrame(row[1][1:]) #remove the index name from the series
+            print(col_names[0])
+            print(row[1][0])
+            df_aux[col_names[1]]=row[1][0]      #add the value of the index as another column
+            df_aux.reset_index(inplace=True) #remove index
+            df_aux.columns=[col_names[1],col_names[2],col_names[0]] #rename columns
+            series_list.append(df_aux)
+            
+        df_final=pd.concat(series_list)
+        df_final=df_final[col_names] #rearragne column names
+        return df_final
