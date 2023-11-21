@@ -305,7 +305,7 @@ class Eye(DataMungling):
         self.data_matrix.rename(columns={self.data_matrix.columns[0]:'asset'},inplace=True)
         self.data_matrix=self.data_matrix[['session','asset']]
 
-    def vertical_index(self,window_analysis:float):
+    def vertical_index(self,window_analysis:float,screen_normalization=False,screen:list[str]=[1920,1080]):
         """Method to calculate vertical index.
         using the veriticaility columnn to count the total
         number of horizontal and vertical sacaddes. 
@@ -329,21 +329,26 @@ class Eye(DataMungling):
                     )   
             
             verticality=segmented_df['verticality'].values
-            vi=self.compute_vertical_index(verticality)
+            vi=self.compute_vertical_index(verticality,screen_normalization)
             data_dict[asset]=[vi]
 
         self.vertical_index_df=pd.DataFrame(data_dict)
 
 
-    def compute_vertical_index(self,vector_index):
+    def compute_vertical_index(self,vector_index,screen_normalization=False,screen:list[str]=[1920,1080]):
         """Calculate vertical index from a vector of 0 and 1
         Args:
             vector_index (_type_): 0 and ones int numpy array vector
         """
-        vertical=vector_index[vector_index==1].size
-        horizontal=vector_index[vector_index==0].size
-        vi=self.calculate_contrast(vertical,horizontal)
-        # print(f'vertical: {vertical}, horizontal: {horizontal},verticality: {vector_index}')
+        if screen_normalization:
+            vertical=vector_index[vector_index==1].size * screen[1] 
+            horizontal=vector_index[vector_index==0].size * screen[0]
+            vi=self.calculate_contrast(vertical,horizontal)
+        else:
+            vertical=vector_index[vector_index==1].size 
+            horizontal=vector_index[vector_index==0].size 
+            vi=self.calculate_contrast(vertical,horizontal)
+            # print(f'vertical: {vertical}, horizontal: {horizontal},verticality: {vector_index}')
         return vi
     
     
