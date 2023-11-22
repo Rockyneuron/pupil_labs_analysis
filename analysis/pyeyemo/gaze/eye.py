@@ -165,16 +165,47 @@ class Eye(DataMungling):
         self.data_matrix.rename(columns={self.data_matrix.columns[0]:'asset'},inplace=True)
         self.data_matrix=self.data_matrix[['session','asset']]
 
-    def vertical_index(self,window_analysis:float,screen_normalization=False,screen:list[str]=[1920,1080]):
+    def vertical_index(self,window_analysis:float,window_onset:float,screen_normalization=False,screen:list[str]=[1920,1080]):
         """Method to calculate vertical index.
         using the veriticaility columnn to count the total
         number of horizontal and vertical sacaddes. 
         vi=(H-V)/(H+V)
 
         Args:
-            window_analysis (float): _description_
+            window_analysis (float): time range of the window of analysis
+            window_onset (float): Onset of the window, to discard analysis
+            screen_normalization (bool, optional): _description_. Defaults to False.
+            screen (list[str], optional): _description_. Defaults to [1920,1080].
         """
         
+        data_dict=dict([(key,[None]) for key in self.annotation_list])# dict with empty keys 
+        vertical_index_df=pd.DataFrame()#pd.DataFrame(data_dict,index=np.arange(0,800))
+        data_list=[]
+        for asset in self.annotation_list:
+            aux_df=self.fixations.query(f"asset == '{asset}'") #break table by asset name
+            time_0=aux_df['start_timestamp'].values[0]
+            segmented_df=cm.filter_rows_by_temporal_values(
+                    dataframe=aux_df,
+                    time_column='start_timestamp',
+                    ini_value=time_0+window_onset,
+                    end_value=time_0+window_analysis
+                    )   
+            
+            verticality=segmented_df['verticality'].values
+            vi=self.compute_vertical_index(verticality,screen_normalization)
+            data_dict[asset]=[vi]
+
+        self.vertical_index_df=pd.DataFrame(data_dict)
+
+    def vertical_index_std(self,window_analysis:float,screen_normalization=False,screen:list[str]=[1920,1080]):
+        """Vertical indexm calculation using standard devaition
+        (std(x)-std(y)=/(std(x)+std(y))
+
+        Args:
+            window_analysis (float): Window size of anaysis
+            screen_normalization (bool, optional): _description_. Defaults to False.
+            screen (list[str], optional): _description_. Defaults to [1920,1080].
+        """
         data_dict=dict([(key,[None]) for key in self.annotation_list])# dict with empty keys 
         vertical_index_df=pd.DataFrame()#pd.DataFrame(data_dict,index=np.arange(0,800))
         data_list=[]
@@ -187,13 +218,6 @@ class Eye(DataMungling):
                     ini_value=time_0,
                     end_value=time_0+window_analysis
                     )   
-            
-            verticality=segmented_df['verticality'].values
-            vi=self.compute_vertical_index(verticality,screen_normalization)
-            data_dict[asset]=[vi]
-
-        self.vertical_index_df=pd.DataFrame(data_dict)
-
 
     def compute_vertical_index(self,vector_index,screen_normalization=False,screen:list[str]=[1920,1080]):
         """Calculate vertical index from a vector of 0 and 1
@@ -262,4 +286,24 @@ class Eye(DataMungling):
         else:
             raise Exception('Annotation and Data do noSt match')
 
-    
+
+class EyeLink(Eye):
+
+    def __init__(self,name='some_subject') -> None:
+        self.name=name
+        import mne
+
+    def load_annotations(self,annotation_dir:str):
+        """function to load annotations
+        as pandas dataframe
+        """
+        self.annotations_csv = annotation_dir
+        self.annotations=pd.read_csv(self.annotations_csv)
+        self.data_matrix=self.annotations
+
+    def load_fixations(self,fixations_dir:str):
+        """method to load fixations csv as 
+        pandas dataframe
+        """
+        self.fixations_dir = fixations_dir
+        self.fixations=mne.io.read_raw_eyelink(fixations_dir, preload=True, create_annotations=['blinks','messages'])
