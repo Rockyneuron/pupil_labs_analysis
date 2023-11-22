@@ -165,7 +165,10 @@ class Eye(DataMungling):
         self.data_matrix.rename(columns={self.data_matrix.columns[0]:'asset'},inplace=True)
         self.data_matrix=self.data_matrix[['session','asset']]
 
-    def vertical_index(self,window_analysis:float,window_onset:float,screen_normalization=False,screen:list[str]=[1920,1080]):
+    def vertical_index(self,window_analysis:float,
+                       window_onset:float,
+                       screen_normalization=False,
+                       screen:list[str]=[1920,1080]):
         """Method to calculate vertical index.
         using the veriticaility columnn to count the total
         number of horizontal and vertical sacaddes. 
@@ -196,10 +199,18 @@ class Eye(DataMungling):
             data_dict[asset]=[vi]
 
         self.vertical_index_df=pd.DataFrame(data_dict)
+        self.vertical_index_df.index=[self.name] # put name of subject as index 
 
-    def vertical_index_std(self,window_analysis:float,screen_normalization=False,screen:list[str]=[1920,1080]):
+    def vertical_index_std(self,
+                           window_analysis:float,
+                           window_onset:float,
+                           screen_normalization=False,
+                           screen:list[str]=[1920,1080],
+                           x_col:str='norm_pos_x',
+                           y_col:str='norm_pos_y'):
+        
         """Vertical indexm calculation using standard devaition
-        (std(x)-std(y)=/(std(x)+std(y))
+        (std(y)-std(x)=/(std(x)+std(y))
 
         Args:
             window_analysis (float): Window size of anaysis
@@ -218,6 +229,18 @@ class Eye(DataMungling):
                     ini_value=time_0,
                     end_value=time_0+window_analysis
                     )   
+            
+            x_std=np.std(segmented_df[x_col])
+            y_std=np.std(segmented_df[y_col])
+
+            if screen_normalization:
+               vi=self.calculate_contrast(y_std* screen[1],x_std* screen[0])
+            else:
+                vi=self.calculate_contrast(y_std,x_std)
+
+            data_dict[asset]=[vi]
+        self.vertical_index_std_df=pd.DataFrame(data_dict)
+        self.vertical_index_df.index=[self.name] # put name of subject as index 
 
     def compute_vertical_index(self,vector_index,screen_normalization=False,screen:list[str]=[1920,1080]):
         """Calculate vertical index from a vector of 0 and 1
