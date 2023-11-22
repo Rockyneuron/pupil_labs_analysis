@@ -185,16 +185,9 @@ class Eye(DataMungling):
         vertical_index_df=pd.DataFrame()#pd.DataFrame(data_dict,index=np.arange(0,800))
         data_list=[]
         for asset in self.annotation_list:
-            aux_df=self.fixations.query(f"asset == '{asset}'") #break table by asset name
-            time_0=aux_df['start_timestamp'].values[0]
-            segmented_df=cm.filter_rows_by_temporal_values(
-                    dataframe=aux_df,
-                    time_column='start_timestamp',
-                    ini_value=time_0+window_onset,
-                    end_value=time_0+window_analysis
-                    )   
+            self.segment_df(asset,window_onset,window_analysis)
             
-            verticality=segmented_df['verticality'].values
+            verticality=self.segmented_df['verticality'].values
             vi=self.compute_vertical_index(verticality,screen_normalization)
             data_dict[asset]=[vi]
 
@@ -221,17 +214,9 @@ class Eye(DataMungling):
         vertical_index_df=pd.DataFrame()#pd.DataFrame(data_dict,index=np.arange(0,800))
         data_list=[]
         for asset in self.annotation_list:
-            aux_df=self.fixations.query(f"asset == '{asset}'") #break table by asset name
-            time_0=aux_df['start_timestamp'].values[0]
-            segmented_df=cm.filter_rows_by_temporal_values(
-                    dataframe=aux_df,
-                    time_column='start_timestamp',
-                    ini_value=time_0+window_onset,
-                    end_value=time_0+window_analysis
-                    )   
-            
-            x_std=np.std(segmented_df[x_col])
-            y_std=np.std(segmented_df[y_col])
+            self.segment_df(asset,window_onset,window_analysis)
+            x_std=np.std(self.segmented_df[x_col])
+            y_std=np.std(self.segmented_df[y_col])
 
             if screen_normalization:
                vi=self.calculate_contrast(y_std* screen[1],x_std* screen[0])
@@ -241,6 +226,18 @@ class Eye(DataMungling):
             data_dict[asset]=[vi]
         self.vertical_index_std_df=pd.DataFrame(data_dict)
         self.vertical_index_std_df.index=[self.name] # put name of subject as index 
+
+
+    def segment_df(self,asset,window_onset,window_analysis,time_col:str):
+            aux_df=self.fixations.query(f"asset == '{asset}'") #break table by asset name
+            time_0=aux_df['start_timestamp'].values[0]
+            self.segmented_df=cm.filter_rows_by_temporal_values(
+                    dataframe=aux_df,
+                    time_column='start_timestamp',
+                    ini_value=time_0+window_onset,
+                    end_value=time_0+window_analysis
+                    ) 
+              
 
     def compute_vertical_index(self,vector_index,screen_normalization=False,screen:list[str]=[1920,1080]):
         """Calculate vertical index from a vector of 0 and 1
