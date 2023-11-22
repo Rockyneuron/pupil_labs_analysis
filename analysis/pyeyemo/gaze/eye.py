@@ -226,7 +226,7 @@ class Eye(DataMungling):
             segmented_df=cm.filter_rows_by_temporal_values(
                     dataframe=aux_df,
                     time_column='start_timestamp',
-                    ini_value=time_0,
+                    ini_value=time_0+window_onset,
                     end_value=time_0+window_analysis
                     )   
             
@@ -240,7 +240,7 @@ class Eye(DataMungling):
 
             data_dict[asset]=[vi]
         self.vertical_index_std_df=pd.DataFrame(data_dict)
-        self.vertical_index_df.index=[self.name] # put name of subject as index 
+        self.vertical_index_std_df.index=[self.name] # put name of subject as index 
 
     def compute_vertical_index(self,vector_index,screen_normalization=False,screen:list[str]=[1920,1080]):
         """Calculate vertical index from a vector of 0 and 1
