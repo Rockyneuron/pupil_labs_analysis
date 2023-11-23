@@ -48,7 +48,7 @@ class Eye(DataMungling):
         pandas dataframe
         """
         self.fixations_dir = fixations_dir
-        self.fixations=pd.read_csv(self.fixations_dir)     
+        self.fixations=pd.read_csv(self.fixations_dir)   
 
     def eliminate_duplicates(self,df:pd.DataFrame,column:str='fixation_id') ->None: 
         """Eliminate duplicate values of columns
