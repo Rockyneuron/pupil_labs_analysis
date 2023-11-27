@@ -168,7 +168,9 @@ class Eye(DataMungling):
     def vertical_index(self,window_analysis:float,
                        window_onset:float,
                        screen_normalization=False,
-                       screen:list[str]=[1920,1080]):
+                       screen:list[str]=[1920,1080],
+                       time_col:str='start_timestamp'):
+
         """Method to calculate vertical index.
         using the veriticaility columnn to count the total
         number of horizontal and vertical sacaddes. 
@@ -185,7 +187,7 @@ class Eye(DataMungling):
         vertical_index_df=pd.DataFrame()#pd.DataFrame(data_dict,index=np.arange(0,800))
         data_list=[]
         for asset in self.annotation_list:
-            self.segment_df(asset,window_onset,window_analysis)
+            self.segment_df(asset,window_onset,window_analysis,self.fixations,time_col)
             
             verticality=self.segmented_df['verticality'].values
             vi=self.compute_vertical_index(verticality,screen_normalization)
@@ -200,7 +202,8 @@ class Eye(DataMungling):
                            screen_normalization=False,
                            screen:list[str]=[1920,1080],
                            x_col:str='norm_pos_x',
-                           y_col:str='norm_pos_y'):
+                           y_col:str='norm_pos_y',
+                           time_col:str='start_timestamp'):
         
         """Vertical indexm calculation using standard devaition
         (std(y)-std(x)=/(std(x)+std(y))
@@ -214,7 +217,7 @@ class Eye(DataMungling):
         vertical_index_df=pd.DataFrame()#pd.DataFrame(data_dict,index=np.arange(0,800))
         data_list=[]
         for asset in self.annotation_list:
-            self.segment_df(asset,window_onset,window_analysis)
+            self.segment_df(asset,window_onset,window_analysis,self.fixations,time_col)
             x_std=np.std(self.segmented_df[x_col])
             y_std=np.std(self.segmented_df[y_col])
 
@@ -228,8 +231,8 @@ class Eye(DataMungling):
         self.vertical_index_std_df.index=[self.name] # put name of subject as index 
 
 
-    def segment_df(self,asset,window_onset,window_analysis,time_col:str='start_timestamp'):
-            aux_df=self.fixations.query(f"asset == '{asset}'") #break table by asset name
+    def segment_df(self,asset,window_onset,window_analysis,df_to_segment,time_col:str='start_timestamp'):
+            aux_df=df_to_segment.query(f"asset == '{asset}'") #break table by asset name
             time_0=aux_df[time_col].values[0]
             self.segmented_df=cm.filter_rows_by_temporal_values(
                     dataframe=aux_df,
@@ -329,7 +332,8 @@ class EyeLink(Eye):
         self.fixations=mne.io.read_raw_eyelink(fixations_dir, preload=True, create_annotations=['blinks','messages'])
 
 
-class Emo(DataMungling):
+class Emo (Eye,DataMungling,Normalization):
+
     def __init__(self,name='some_subject')->None:
         self.name=name
 
@@ -347,3 +351,57 @@ class Emo(DataMungling):
         """
         self.heart_rate_dir = heart_rate_dir
         self.heart_rate=pd.read_csv(heart_rate_dir)
+
+    def label_data_annotation(self,
+                              annotation_col:str='label',
+                              annotation_time_col:str='timestamp',
+                              label_name:str='asset',
+                              data_time_col_name:str='start_timestamp'):
+        """Method that labels a a new colum with the label of a reference annotation dataframe. 
+        Basically i have 2 dataframes, with a similar temporal value range, and i want to assing those
+        anotattions to a new column in the time interval in which they are happening.
+        For this we turover the annotations_df to sort it by descending values, and then asing those annotation
+        to timestamps>= annotation_timestamp
+
+        Args:
+            annotation_col (str, optional): name of the annotation label column. Defaults to 'label'.
+            label_name (str, optional): name ofd the new column with the asiggned annotaiton. Defaults to 'asset'.
+            data_time_col_name (str, optional): name of the timestamp colum of the main df. Defaults to 'start_timestamp'.
+        """
+        self.heart_rate[label_name]=self.heart_rate[data_time_col_name]
+
+        for anotation in self.annotations.sort_values(by=[annotation_time_col],ascending=False).iterrows():
+             self.heart_rate[label_name]=self.heart_rate[label_name].map(lambda x: anotation[1][annotation_col]\
+                                                    if isinstance(x,float)\
+                                                    and (x>=anotation[1][annotation_time_col])
+                                                        else x)
+             
+    
+    def calculate_hr(self, window_analysis:float,
+                           window_onset:float,
+                           x_col:str='HR'):
+        
+        """Vertical indexm calculation using standard devaition
+        (std(y)-std(x)=/(std(x)+std(y))
+
+        Args:
+            window_analysis (float): Window size of anaysis
+            screen_normalization (bool, optional): _description_. Defaults to False.
+            screen (list[str], optional): _description_. Defaults to [1920,1080].
+        """
+
+        data_dict=dict([(key,[None]) for key in self.annotation_list])# dict with empty keys 
+
+        for asset in self.annotation_list:
+            self.segment_df(asset,window_onset,window_analysis)
+            hr=np.mean(self.segmented_df[x_col])
+            
+            data_dict[asset]=[hr]
+        self.heart_rate_df=pd.DataFrame(data_dict)
+        self.heart_rate_df.index=[self.name] # put name of subject as index 
+
+    def data_z_scores(self,new_col:str,type:str='HR'):
+        if type=='HR':
+            self.heart_rate[new_col]=self.normalize(values=self.heart_rate['HR'],
+                                                             type='z_score')
+        
