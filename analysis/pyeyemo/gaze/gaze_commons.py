@@ -67,6 +67,52 @@ def extract_session_path_pupil_labs(recording_location:str,subject:str):
     
     return data_paths
 
+
+def extract_session_path_lsl(recording_location:str,subject:str):
+    """Function to retrieve data paths for each subject of annation dataframes,
+    fixations, fixations on surface and so on from pupil labs.
+
+    Args:
+        recording_location (str): 
+        subject (str): _description_
+
+    Returns:
+        _dict_: dictionary with the data paths of the csvs of interest
+                {'annotations':annotations_csv,
+                 'fixations':fixations_csv,
+                 'fixations_surf':fixations_surf_dir}
+    """
+    #Load data in folders
+    recording_folder=[record for record in os.listdir(recording_location)  if '00' in record]
+    print(recording_folder)
+    index_aux = list(map(lambda x: not('_' in x), recording_folder))
+    recording_folder=list(compress(recording_folder,index_aux))
+    #Load data in folders
+    if len(recording_folder)>1:
+        ValueError('Ambiguty in folder of experiment')
+    recording_location=recording_location.joinpath(recording_folder[0],'exports')
+    recording_location_raw=recording_location.joinpath(recording_folder[0],'exports')
+    export_folder=[record for record in os.listdir(recording_location)  if '00' in record]
+    if len(export_folder)>1:
+        ValueError('Ambiguty in folder of exports')
+    recording_location=recording_location.joinpath(export_folder[0])
+    fixations_surf_csv=[record for record in os.listdir(recording_location.joinpath('surfaces'))  if 'fixations_on_surface' in record][0]
+    fixations_surf_dir = os.path.join(recording_location, 'surfaces',fixations_surf_csv)
+
+    annotations_csv = os.path.join(recording_location,'annotations.csv')
+    fixations_csv = os.path.join(recording_location,'fixations.csv')
+
+    data_paths= {'annotations':annotations_csv,
+                 'fixations':fixations_csv,
+                 'fixations_surf':fixations_surf_dir}
+    
+    return data_paths
+
+
+
+
+
+
 def distance_x_y(x:pd.Series,y:pd.Series):
     """function to calculate the distance between two points
     Args:
