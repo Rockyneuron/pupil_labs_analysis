@@ -231,7 +231,7 @@ class Eye(DataMungling):
         self.vertical_index_std_df.index=[self.name] # put name of subject as index 
 
 
-    def segment_df(self,asset,window_onset,window_analysis,df_to_segment,time_col:str='start_timestamp'):
+    def segment_df(self,asset:str,window_onset:float,window_analysis:float,df_to_segment:pd.DataFrame,time_col:str):
             aux_df=df_to_segment.query(f"asset == '{asset}'") #break table by asset name
             time_0=aux_df[time_col].values[0]
             self.segmented_df=cm.filter_rows_by_temporal_values(
