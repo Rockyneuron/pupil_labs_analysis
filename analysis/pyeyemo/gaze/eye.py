@@ -327,23 +327,3 @@ class EyeLink(Eye):
         """
         self.fixations_dir = fixations_dir
         self.fixations=mne.io.read_raw_eyelink(fixations_dir, preload=True, create_annotations=['blinks','messages'])
-
-
-class Emo(DataMungling):
-    def __init__(self,name='some_subject')->None:
-        self.name=name
-
-    def load_annotations(self,annotation_dir:str):
-        """function to load annotations
-        as pandas dataframe
-        """
-        self.annotations_csv = annotation_dir
-        self.annotations=pd.read_csv(self.annotations_csv)
-        self.data_matrix=self.annotations
-
-    def load_heart_rate(self,heart_rate_dir:str):
-        """method to load fixations csv as 
-        pandas dataframe
-        """
-        self.heart_rate_dir = heart_rate_dir
-        self.heart_rate=pd.read_csv(heart_rate_dir)
