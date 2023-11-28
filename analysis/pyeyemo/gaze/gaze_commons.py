@@ -67,10 +67,8 @@ def extract_session_path_pupil_labs(recording_location:str,subject:str):
     
     return data_paths
 
-
 def extract_session_path_lsl(recording_location:str,subject:str):
-    """Function to retrieve data paths for each subject of annation dataframes,
-    fixations, fixations on surface and so on from pupil labs.
+    """Function to retrieve data paths for each subject of emotibit data.
 
     Args:
         recording_location (str): 
@@ -78,40 +76,39 @@ def extract_session_path_lsl(recording_location:str,subject:str):
 
     Returns:
         _dict_: dictionary with the data paths of the csvs of interest
-                {'annotations':annotations_csv,
-                 'fixations':fixations_csv,
-                 'fixations_surf':fixations_surf_dir}
+                {'lsl_data':--to complete}
     """
-    #Load data in folders
-    recording_folder=[record for record in os.listdir(recording_location)  if '00' in record]
-    print(recording_folder)
-    index_aux = list(map(lambda x: not('_' in x), recording_folder))
-    recording_folder=list(compress(recording_folder,index_aux))
-    #Load data in folders
+
+    recording_folder=[record for record in os.listdir(recording_location)]
+    recording_folder
+    #load data in folder
     if len(recording_folder)>1:
-        ValueError('Ambiguty in folder of experiment')
-    recording_location=recording_location.joinpath(recording_folder[0],'exports')
-    recording_location_raw=recording_location.joinpath(recording_folder[0],'exports')
-    export_folder=[record for record in os.listdir(recording_location)  if '00' in record]
-    if len(export_folder)>1:
-        ValueError('Ambiguty in folder of exports')
-    recording_location=recording_location.joinpath(export_folder[0])
-    fixations_surf_csv=[record for record in os.listdir(recording_location.joinpath('surfaces'))  if 'fixations_on_surface' in record][0]
-    fixations_surf_dir = os.path.join(recording_location, 'surfaces',fixations_surf_csv)
+        Warning('Ambiguty in folder of experiment')
+    recording_location=recording_location.joinpath(recording_folder[0])
+    #add lsl data file to path
+    data_file_path=[record for record in os.listdir(recording_location)]
+    if len(data_file_path)>1:
+        Warning('Ambiguity in number of data files')
+    recording_location=recording_location.joinpath(data_file_path[0])  
 
-    annotations_csv = os.path.join(recording_location,'annotations.csv')
-    fixations_csv = os.path.join(recording_location,'fixations.csv')
-
-    data_paths= {'annotations':annotations_csv,
-                 'fixations':fixations_csv,
-                 'fixations_surf':fixations_surf_dir}
-    
+    data_paths={'lsl_data':recording_location}
     return data_paths
 
+def extract_session_path_emotibit(recording_location:str,subject:str):
 
-
-
-
+    #add emotibit data file to path
+    data_file_path=[record for record in os.listdir(recording_location)]
+    if len(data_file_path)>1:
+         Warning('Ambiguity in number of data files')
+    heart_rate=recording_location.joinpath(data_file_path[0].replace('.csv','')+'_HR.csv')  
+    annotations=recording_location.joinpath(data_file_path[0].replace('.csv','')+'_LM.csv')  
+    heart_bea_inter_beat=recording_location.joinpath(data_file_path[0].replace('.csv','')+'_BI.csv')  
+    electrodermal=recording_location.joinpath(data_file_path[0].replace('.csv','')+'_EA.csv')  
+    data_paths={'heart_rate':heart_rate,
+                'annotations':annotations,
+                'heart_bea_inter_beat':heart_bea_inter_beat,
+                'electrodermal':electrodermal}
+    return data_paths
 
 def distance_x_y(x:pd.Series,y:pd.Series):
     """function to calculate the distance between two points

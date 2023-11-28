@@ -379,8 +379,9 @@ class Emo (Eye,DataMungling,Normalization):
     
     def calculate_hr(self, window_analysis:float,
                            window_onset:float,
-                           x_col:str='HR'):
-        
+                           x_col:str='HR',
+                           data_time_col_name:str='LocalTimestamp'):
+
         """Vertical indexm calculation using standard devaition
         (std(y)-std(x)=/(std(x)+std(y))
 
@@ -393,15 +394,16 @@ class Emo (Eye,DataMungling,Normalization):
         data_dict=dict([(key,[None]) for key in self.annotation_list])# dict with empty keys 
 
         for asset in self.annotation_list:
-            self.segment_df(asset,window_onset,window_analysis)
+            self.segment_df(asset,window_onset,window_analysis,self.heart_rate,time_col=data_time_col_name)
+            display(self.segmented_df)
             hr=np.mean(self.segmented_df[x_col])
             
+
             data_dict[asset]=[hr]
         self.heart_rate_df=pd.DataFrame(data_dict)
         self.heart_rate_df.index=[self.name] # put name of subject as index 
 
-    def data_z_scores(self,new_col:str,type:str='HR'):
+    def data_z_scores(self,new_col:str,type:str='HR',col:str='HR'):
         if type=='HR':
-            self.heart_rate[new_col]=self.normalize(values=self.heart_rate['HR'],
+            self.heart_rate[new_col]=self.normalize(values=self.heart_rate[col],
                                                              type='z_score')
-        
