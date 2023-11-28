@@ -7,7 +7,7 @@ class DataMungling:
 
     def cut_dataframe_by_column_values(self,
                                     df:pd.DataFrame=pd.DataFrame,
-                                    inital_label:str='asset',
+                                    initial_label:str='asset',
                                     final_label:str='end_of_experiment',
                                     filter_column:str='label'):
         
@@ -26,7 +26,7 @@ class DataMungling:
             pd.Dataframe: _description_
         """
 
-        index_initial=df.loc[df[filter_column]==inital_label].index[0]
+        index_initial=df.loc[df[filter_column]==initial_label].index[0]
         index_final=df.loc[df[filter_column]==final_label]
         if index_final.empty:
             df_final=df.loc[index_initial::,:]

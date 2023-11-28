@@ -147,7 +147,7 @@ class Eye(DataMungling):
     def cut_data_of_interest(self):
 
         self.fixations=self.cut_dataframe_by_column_values(df=self.fixations,
-                                                            inital_label=self.annotations.iloc[0].label,
+                                                            initial_label=self.annotations.iloc[0].label,
                                                             final_label='end_of_experiment',
                                                             filter_column='asset')
     
@@ -334,8 +334,12 @@ class EyeLink(Eye):
 
 class Emo (Eye,DataMungling,Normalization):
 
-    def __init__(self,name='some_subject')->None:
+    def __init__(self,data_paths:dict,name:str)->None:
         self.name=name
+        self.data_paths=data_paths
+
+        for key,value in data_paths.items():
+            setattr(self,key,pd.read_csv(value))
 
     def load_annotations(self,annotation_dir:str):
         """function to load annotations
@@ -368,14 +372,37 @@ class Emo (Eye,DataMungling,Normalization):
             label_name (str, optional): name ofd the new column with the asiggned annotaiton. Defaults to 'asset'.
             data_time_col_name (str, optional): name of the timestamp colum of the main df. Defaults to 'start_timestamp'.
         """
-        self.heart_rate[label_name]=self.heart_rate[data_time_col_name]
+    
+        # self.heart_rate=self.label_dataframe(self.heart_rate,
+        #                                      annotation_col,
+        #                                      annotation_time_col,
+        #                                      label_name,
+        #                                      data_time_col_name)
 
+        for key,value in self.data_paths.items():
+            df=getattr(self,key)
+            self.label_dataframe(df,
+                                annotation_col,
+                                annotation_time_col,
+                                label_name,
+                                data_time_col_name)
+            setattr(self,key,self.labelled_df)
+
+    def label_dataframe(self,df:pd.DataFrame,
+                        annotation_col,
+                        annotation_time_col,
+                        label_name,
+                        data_time_col_name):
+
+        df[label_name]=df[data_time_col_name]
         for anotation in self.annotations.sort_values(by=[annotation_time_col],ascending=False).iterrows():
-             self.heart_rate[label_name]=self.heart_rate[label_name].map(lambda x: anotation[1][annotation_col]\
+             df[label_name]=df[label_name].map(lambda x: anotation[1][annotation_col]\
                                                     if isinstance(x,float)\
                                                     and (x>=anotation[1][annotation_time_col])
                                                         else x)
-             
+
+        self.labelled_df=df
+         
     
     def calculate_hr(self, window_analysis:float,
                            window_onset:float,
@@ -395,7 +422,7 @@ class Emo (Eye,DataMungling,Normalization):
 
         for asset in self.annotation_list:
             self.segment_df(asset,window_onset,window_analysis,self.heart_rate,time_col=data_time_col_name)
-            display(self.segmented_df)
+            # display(self.segmented_df)
             hr=np.mean(self.segmented_df[x_col])
             
 
@@ -407,3 +434,42 @@ class Emo (Eye,DataMungling,Normalization):
         if type=='HR':
             self.heart_rate[new_col]=self.normalize(values=self.heart_rate[col],
                                                              type='z_score')
+
+    def cut_data_of_interest(self,initial_label:str,final_label:str,filter_column:str):
+        for key,value in self.data_paths.items():
+            print(key)
+            cut_df=self.cut_dataframe_by_column_values(df=getattr(self,key),
+                                                            initial_label=initial_label, 
+                                                            final_label=final_label,
+                                                            filter_column=filter_column)
+            setattr(self,key,cut_df)
+
+
+    def epoch_calculation(self,myfunction,
+                          window_onset:float,
+                          window_analysis:float,
+                          data_time_col_name:str='LocalTimestamp'):
+      
+      data_dict=dict([(key,[None]) for key in self.annotation_list])# dict with empty keys 
+ 
+      for key,value in self.data_paths.items():   
+          print(key)
+          
+          try:
+              
+                for asset in self.annotation_list:
+                    self.segment_df(asset=asset,
+                                    window_onset=window_onset,
+                                    window_analysis=window_analysis,
+                                    df_to_segment=getattr(self,key),
+                                    time_col=data_time_col_name)
+                    
+                    value=myfunction(self.segmented_df[key.rsplit('_')[-1]])
+                    data_dict[asset]=[value]
+          except:
+              Warning(f'{key} missing annotations')
+
+          df=pd.DataFrame(data_dict)
+          df.index=[self.name] # put name of subject as index 
+          setattr(self,key+'_df',df)
+
