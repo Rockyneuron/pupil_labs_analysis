@@ -31,7 +31,7 @@ class DataMungling:
         if index_final.empty:
             df_final=df.loc[index_initial::,:]
         else:
-            df_final=df.loc[index_initial:index_final.index,:]
+            df_final=df.loc[index_initial:index_final.index.values[0],:]
         return df_final
 
     def filter_series_string(self,df:pd.Series,label:str='label'):
