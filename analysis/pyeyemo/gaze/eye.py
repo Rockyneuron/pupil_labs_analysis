@@ -435,6 +435,15 @@ class Emo (Eye,DataMungling,Normalization):
             self.heart_rate[new_col]=self.normalize(values=self.heart_rate[col],
                                                              type='z_score')
 
+    def data_z_scores_all_data(self):
+
+            for key,value in self.data_paths.items():
+                df=getattr(self,key)
+                df['std']=self.normalize(values=df[key.rsplit('_')[-1]],
+                                          type='z_score')
+
+                setattr(self,key,df)
+
     def cut_data_of_interest(self,initial_label:str,final_label:str,filter_column:str):
         for key,value in self.data_paths.items():
             print(key)
@@ -448,7 +457,8 @@ class Emo (Eye,DataMungling,Normalization):
     def epoch_calculation(self,myfunction,
                           window_onset:float,
                           window_analysis:float,
-                          data_time_col_name:str='LocalTimestamp'):
+                          data_time_col_name:str='LocalTimestamp',
+                          z_scores:bool=False):
       
       data_dict=dict([(key,[None]) for key in self.annotation_list])# dict with empty keys 
  
@@ -463,13 +473,17 @@ class Emo (Eye,DataMungling,Normalization):
                                     window_analysis=window_analysis,
                                     df_to_segment=getattr(self,key),
                                     time_col=data_time_col_name)
-                    
-                    value=myfunction(self.segmented_df[key.rsplit('_')[-1]])
+                    if z_scores:
+                        value=myfunction(self.segmented_df['std'])
+
+                    else:
+                        value=myfunction(self.segmented_df[key.rsplit('_')[-1]])
                     data_dict[asset]=[value]
           except:
               Warning(f'{key} missing annotations')
 
           df=pd.DataFrame(data_dict)
           df.index=[self.name] # put name of subject as index 
+          df.name=key
           setattr(self,key+'_df',df)
 
